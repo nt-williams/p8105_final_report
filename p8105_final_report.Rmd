@@ -1,0 +1,20 @@
+---
+title: "Data Science Final Report"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Motivation
+
+## Initial questions
+
+## Data 
+
+## Exploratory analyses
+
+## Formal analyses
+
+## Discussion
