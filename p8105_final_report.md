@@ -639,8 +639,6 @@ add_predictions(organ_sp, all_sp_model) %>%
 
 <img src="p8105_final_report_files/figure-markdown_github/all splines-1.png" width="65%" />
 
-> NEED TO ADD INFO AND TABLE FOR LRT COMPARING NESTED MODELS
-
 Discussion
 ----------
 

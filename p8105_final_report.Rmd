@@ -364,8 +364,6 @@ add_predictions(organ_sp, all_sp_model) %>%
        y = "Eligible population enrolled (%)")
 ```
 
-> NEED TO ADD INFO AND TABLE FOR LRT COMPARING NESTED MODELS
-
 ## Discussion
 
 Using mixed-effects models we did find main effects of all three policies that were targeted at increasing organ donor enrollment. However, it is important to note that we cannot firmly draw any causal conclusions from the present analysis. While increases organ donor enrollment did coincide with major policy changes in New York, we did not compare the trends of enrollment in New York with those of the greater United States or another state that did not enact any policy during the same timeframe and thus did not establish a counter-factual. As such, we cannot rule out that the results we observed simply reflect a general trend in the United States and not any policy taken by the state of New York. That being said, our models do show a effects of policy changes. 
