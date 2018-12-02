@@ -69,11 +69,11 @@ Extra county level data came from Area Health Resources Files (AHRF). AHRF data 
 library(haven)
 
 ahrf <- 
-  read_sas("C:/Users/niwi8/OneDrive - cumc.columbia.edu/Practicum/opioid_prediction/data/raw/ahrf.sas7bdat")
+  read_sas("data/ahrf.sas7bdat")
 
 ahrf_selected <- read_csv("data/ahrf_selected_variables.csv")
   
-check_label <- function(x){
+check_label <- function(x) {
   if (attr(ahrf[[x]], "label") %in% ahrf_selected$label) {
     return(x)
   }
@@ -140,8 +140,14 @@ organ %>%
     labs(title = "Eligible Population vs Percent Enrolled by County",
          x = "Estimated Population 18 and Over",
          y = "Percent of Eligible Population Enrolled") +
-    geom_text_repel(data = lowest_3_counties, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county)) +
-    geom_text_repel(data = top_county, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county))
+    geom_text_repel(data = lowest_3_counties, 
+                    aes(x = population_18_estimate, 
+                        y = eligible_population_enrolled, 
+                        label = county)) +
+    geom_text_repel(data = top_county, 
+                    aes(x = population_18_estimate, 
+                        y = eligible_population_enrolled, 
+                        label = county))
 ```
 
 <img src="p8105_final_report_files/figure-markdown_github/population vs. percent-1.png" width="75%" />
@@ -156,11 +162,11 @@ Formal analyses of the effect of major policy changes were conducted using mixed
 ``` r
 organ_sp %>% 
   ggplot() +
-  geom_smooth(aes(x = total_days, y = eligible_population_enrolled, color = opo, group = county), 
-              alpha = 0.4, se = FALSE) +
+  geom_line(aes(x = total_days, y = eligible_population_enrolled, color = opo, group = county), 
+            alpha = 0.6) +
   viridis::scale_color_viridis(discrete = TRUE) + 
   labs(title = "Proportion of eligible New Yorkers enrolled as organ donors",
-       subtitle = "Using smoothing line",
+       subtitle = "Dashed lines indicate 3 policies to be anlayzed",
        x = "Time as total days",
        y = "Eligible population enrolled (%)") +
   geom_vline(xintercept = 1491, linetype = "dashed") + 
@@ -175,48 +181,6 @@ organ_sp %>%
 ```
 
 <img src="p8105_final_report_files/figure-markdown_github/no model-1.png" width="75%" />
-
-<table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
-<thead>
-<tr>
-<th style="text-align:left;">
-Term
-</th>
-<th style="text-align:right;">
-Coefficient
-</th>
-<th style="text-align:right;">
-SE
-</th>
-<th style="text-align:right;">
-Lower bound
-</th>
-<th style="text-align:right;">
-Upper bound
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-Time (year)
-</td>
-<td style="text-align:right;">
-2.675
-</td>
-<td style="text-align:right;">
-0.008
-</td>
-<td style="text-align:right;">
-2.66
-</td>
-<td style="text-align:right;">
-2.69
-</td>
-</tr>
-</tbody>
-</table>
-<img src="p8105_final_report_files/figure-markdown_github/overall time-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>

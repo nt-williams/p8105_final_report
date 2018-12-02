@@ -90,11 +90,11 @@ Extra county level data came from Area Health Resources Files (AHRF). AHRF data 
 library(haven)
 
 ahrf <- 
-  read_sas("C:/Users/niwi8/OneDrive - cumc.columbia.edu/Practicum/opioid_prediction/data/raw/ahrf.sas7bdat")
+  read_sas("data/ahrf.sas7bdat")
 
 ahrf_selected <- read_csv("data/ahrf_selected_variables.csv")
   
-check_label <- function(x){
+check_label <- function(x) {
   if (attr(ahrf[[x]], "label") %in% ahrf_selected$label) {
     return(x)
   }
@@ -160,8 +160,14 @@ organ %>%
     labs(title = "Eligible Population vs Percent Enrolled by County",
          x = "Estimated Population 18 and Over",
          y = "Percent of Eligible Population Enrolled") +
-    geom_text_repel(data = lowest_3_counties, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county)) +
-    geom_text_repel(data = top_county, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county))
+    geom_text_repel(data = lowest_3_counties, 
+                    aes(x = population_18_estimate, 
+                        y = eligible_population_enrolled, 
+                        label = county)) +
+    geom_text_repel(data = top_county, 
+                    aes(x = population_18_estimate, 
+                        y = eligible_population_enrolled, 
+                        label = county))
 ```
 
 This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that allign with those of neighboring states, such as New Jersey and Connecticut. 
@@ -173,11 +179,11 @@ Formal analyses of the effect of major policy changes were conducted using mixed
 ```{r no model, message = FALSE}
 organ_sp %>% 
   ggplot() +
-  geom_smooth(aes(x = total_days, y = eligible_population_enrolled, color = opo, group = county), 
-              alpha = 0.4, se = FALSE) +
+  geom_line(aes(x = total_days, y = eligible_population_enrolled, color = opo, group = county), 
+            alpha = 0.6) +
   viridis::scale_color_viridis(discrete = TRUE) + 
   labs(title = "Proportion of eligible New Yorkers enrolled as organ donors",
-       subtitle = "Using smoothing line",
+       subtitle = "Dashed lines indicate 3 policies to be anlayzed",
        x = "Time as total days",
        y = "Eligible population enrolled (%)") +
   geom_vline(xintercept = 1491, linetype = "dashed") + 
@@ -188,37 +194,6 @@ organ_sp %>%
   annotate(geom = "text", x = 3300, y = 5, label = "2017") +
   theme(legend.position = "bottom", 
         legend.title = element_blank()) + 
-  guides(color = guide_legend(ncol = 2))
-```
-
-
-```{r overall time, echo = FALSE, message = FALSE}
-no_sp_model <- organ_sp %>% 
-  lmer(eligible_population_enrolled ~ total_days + opo + (1 | county), data = ., 
-       REML = FALSE)
-
-no_sp_model %>% 
-  broom::tidy() %>% 
-  filter(term == "total_days") %>% 
-  mutate(estimate_year = estimate * 365, 
-         se_year = std.error * 365, 
-         ci_low = estimate_year - 1.96*se_year, 
-         ci_upper = estimate_year + 1.96*se_year) %>% 
-  mutate(term = ifelse(term == "total_days", "Time (year)", term)) %>% 
-  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
-  rename("Term" = term, 
-         "Coefficient" = estimate_year, 
-         "SE" = se_year, 
-         "Lower bound" = ci_low, 
-         "Upper bound" = ci_upper) %>% 
-  knitr::kable(digits = 3, escape = F) %>% 
-  kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
-
-add_predictions(organ_sp, no_sp_model) %>% 
-  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
-  geom_line() + 
-  viridis::scale_color_viridis(discrete = TRUE) + 
-  theme(legend.position = "bottom") + 
   guides(color = guide_legend(ncol = 2))
 ```
 
