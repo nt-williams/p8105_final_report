@@ -14,6 +14,11 @@ library(tidyverse)
 library(lme4)
 library(modelr)
 library(kableExtra)
+library(ggplot2)
+library(rvest)
+library(httr)
+library(ggrepel)
+
 #using data cleaned in api_pull.rmd file
 
 theme_set(theme_bw())
@@ -54,7 +59,7 @@ Was there a statewide change in the growth of donor designation share after any 
 
 ### County Characteristics
 
-What are some factors that predict county donor designation share? 
+What are some factors that predict county donor designation share?
 
 ## Data 
 
@@ -138,6 +143,37 @@ ahrf %>%
 
 
 ## Exploratory analyses
+
+```{r population vs. percent, results = "hide", message = FALSE, warning = FALSE}
+
+lowest_3_counties = organ %>% 
+  filter(date == as.Date("2018-09-01")) %>% 
+  filter(county!= "TOTAL NYS") %>%
+  arrange(eligible_population_enrolled) %>%
+  top_n(n = -3, eligible_population_enrolled)
+
+top_county = organ %>% 
+  filter(date == as.Date("2018-09-01")) %>% 
+  filter(county!= "TOTAL NYS") %>%
+  arrange(eligible_population_enrolled) %>%
+  top_n(n = 1, eligible_population_enrolled)
+
+organ %>% 
+  filter(date == as.Date("2018-09-01")) %>% 
+  filter(county!= "TOTAL NYS") %>%
+  ggplot(aes(x = population_18_estimate, y = eligible_population_enrolled)) +
+    geom_point() +
+    labs(title = "Eligible Population vs Percent Enrolled by County",
+         x = "Estimated Population 18 and Over",
+         y = "Percent of Eligible Population Enrolled") +
+    geom_text_repel(data = lowest_3_counties, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county)) +
+    geom_text_repel(data = top_county, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county))
+
+
+```
+
+This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that allign with those of neighboring states, such as New Jersey and Connecticut. 
+
 
 ## Formal analyses
 
