@@ -38,9 +38,23 @@ organ_sp <- read_csv("data/organ_spline.csv") %>%
 
 [Click here for cleaned data used for analyses](https://www.dropbox.com/sh/grlugs9hrksvkqr/AAAwILSg5UyMrW1CD7dWmHPNa?dl=0)
 
-## Motivation
+ Organ donation is a public health crisis in New York where there are currently 9,449 people waiting for an organ transplant. Due to the scarcity of donated organs, many people do not survive long enough receive a donated organ, and those that do may have wait years for an organ. At Columbia University Medical center, over 2016 and 2017, the mortality rate for the kidney donation waitlist was 7.2 percent.
+  Like every state, NY has a first person consent policy for deceased organ donation. If a person on the donor registry list dies and is a candidate for organ donation, his or her family cannot prevent an organ procurement agency from gifting the organs to a person on an organ waitlist. Although uniform enforcement of this law is questionable, first person consent is believed to be important in supplying organ donations.
+  New York, however, has the lowest proportion of eligible people enrolled on the donor registry. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade and were interested in comparing country donation rates, to see if a targeted approach to increasing NY's organ donation rate may be warranted.  
 
 ## Initial questions
+
+### Trends and Policies
+
+Over the last 6 years, the state government has passed into law several policies to increase the donor designation share. In 2012 it passed Lauren's law, which requires the DMV drivers license application to force people to decide whether or not they will join the registry. In order to complete the application, applicants must actively mark that they will skip over the question. In 2017 the govenor of NY passed a law that reuiquires health insurance applications to asks people if they want to sign up for the organ registry. 
+
+Additionally, in 2016, the size of the eligible pool increased when the minimum age for joining the registry was lowered from eighteen to sixteen.
+
+Was there a statewide change in the growth of donor designation share after any of these laws were passed? If there was, was this change seen in all counties or only a subset?
+
+### County Characteristics
+
+What are some factors that predict county donor designation share? 
 
 ## Data 
 
