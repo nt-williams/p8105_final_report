@@ -193,8 +193,6 @@ Time (year)
 </tr>
 </tbody>
 </table>
-    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
-
 <img src="p8105_final_report_files/figure-markdown_github/overall time-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -254,8 +252,6 @@ Time (year)
 </tr>
 </tbody>
 </table>
-    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
-
 <img src="p8105_final_report_files/figure-markdown_github/spline 2012-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -315,8 +311,6 @@ Time (year)
 </tr>
 </tbody>
 </table>
-    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
-
 <img src="p8105_final_report_files/figure-markdown_github/spline 2016-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -376,8 +370,6 @@ Time (year)
 </tr>
 </tbody>
 </table>
-    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
-
 <img src="p8105_final_report_files/figure-markdown_github/spline 2017-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -483,8 +475,6 @@ Time (year)
 </tr>
 </tfoot>
 </table>
-    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
-
 <img src="p8105_final_report_files/figure-markdown_github/all splines-1.png" width="75%" />
 
 Discussion
