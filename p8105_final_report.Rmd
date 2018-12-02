@@ -59,6 +59,70 @@ organ <- GET("https://health.data.ny.gov/resource/km5a-7zrs.csv?$limit=10000") %
   rename(pop_2012 = "x2012_census_population")
 ```
 
+Splines were created in correspondence with three major policy changes designed to increase donor registration. In order to include time as a variable dates were converted to the number of days since the first data point in the database (September 1, 2008). 
+
+```{r eval = FALSE}
+organ_sp <- organ %>% 
+  mutate(year_sp_2012 = (date > "2012-10-1") * (date - as.Date("2012-10-1")), 
+         year_sp_2016 = (date > "2016-5-1") * (date - as.Date("2016-5-1")), 
+         year_sp_2017 = (date > "2017-2-14") * (date - as.Date("2017-2-14")),
+         total_days = date - as.Date("2008-09-01"))
+```
+
+Extra county level data came from Area Health Resources Files (AHRF). AHRF data collects healthcare related information and demographics at the county level for every county in the United States. Specific variables were chosen from AHRF to be included in this analysis. AHRF data is provided as a SAS datafile with un-informative variable names for over 3000 variables, as such extracting specific variables presented a challenge. Variables labels in SAS are recorded as an variable attribute in R. The following code was used to extract variable labels for variable selection and then pull said variables. 
+
+```{r eval = FALSE}
+library(haven)
+
+ahrf <- 
+  read_sas("C:/Users/niwi8/OneDrive - cumc.columbia.edu/Practicum/opioid_prediction/data/raw/ahrf.sas7bdat")
+
+ahrf_selected <- read_csv("data/ahrf_selected_variables.csv")
+  
+check_label <- function(x){
+  if (attr(ahrf[[x]], "label") %in% ahrf_selected$label) {
+    return(x)
+  }
+}
+
+# check_label("f1529815")
+
+keep_var <- list()
+
+for (i in names(ahrf)) {
+ keep_var[i] <- check_label(i)
+}
+
+keep_var <- names(keep_var)
+
+ahrf <- ahrf %>% 
+  select(keep_var)
+
+keep_names <- list()
+
+for (i in 1:ncol(ahrf)) {
+  keep_names[[i]] <- attr(ahrf[[i]], "label")
+}
+
+for (i in 1:length(keep_names)) {
+  names(keep_names)[i] <- "lulz"
+}
+
+keep_names <- data.frame(keep_names) %>% 
+  gather(keep, label, lulz:lulz.17) %>% 
+  select(label)
+
+data.table::setnames(ahrf, old = keep_var, new = keep_names$label)
+
+ahrf <- ahrf %>% 
+  janitor::clean_names() %>% 
+  filter(state_name == "New York")
+
+ahrf %>% 
+  write_csv("data/ahrf_select_data.csv")
+```
+
+
 ## Exploratory analyses
 
 ## Formal analyses
