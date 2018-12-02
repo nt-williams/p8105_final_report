@@ -617,6 +617,7 @@ Time (year)
 </tr>
 </tfoot>
 </table>
+
 ``` r
 add_predictions(organ_sp, all_sp_model) %>% 
   ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
