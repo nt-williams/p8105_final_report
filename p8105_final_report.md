@@ -11,11 +11,22 @@ Analyzing trends of organ donor enrollment in New York state
 
 [Click here for cleaned data used for analyses](https://www.dropbox.com/sh/grlugs9hrksvkqr/AAAwILSg5UyMrW1CD7dWmHPNa?dl=0)
 
-Motivation
-----------
+Organ donation is a public health crisis in New York where there are currently 9,449 people waiting for an organ transplant. Due to the scarcity of donated organs, many people do not survive long enough receive a donated organ, and those that do may have wait years for an organ. At Columbia University Medical center, over 2016 and 2017, the mortality rate for the kidney donation waitlist was 7.2 percent. Like every state, NY has a first person consent policy for deceased organ donation. If a person on the donor registry list dies and is a candidate for organ donation, his or her family cannot prevent an organ procurement agency from gifting the organs to a person on an organ waitlist. Although uniform enforcement of this law is questionable, first person consent is believed to be important in supplying organ donations. New York, however, has the lowest proportion of eligible people enrolled on the donor registry. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade and were interested in comparing country donation rates, to see if a targeted approach to increasing NY's organ donation rate may be warranted.
 
 Initial questions
 -----------------
+
+### Trends and Policies
+
+Over the last 6 years, the state government has passed into law several policies to increase the donor designation share. In 2012 it passed Lauren's law, which requires the DMV drivers license application to force people to decide whether or not they will join the registry. In order to complete the application, applicants must actively mark that they will skip over the question. In 2017 the govenor of NY passed a law that reuiquires health insurance applications to asks people if they want to sign up for the organ registry.
+
+Additionally, in 2016, the size of the eligible pool increased when the minimum age for joining the registry was lowered from eighteen to sixteen.
+
+Was there a statewide change in the growth of donor designation share after any of these laws were passed? If there was, was this change seen in all counties or only a subset?
+
+### County Characteristics
+
+What are some factors that predict county donor designation share?
 
 Data
 ----
@@ -42,10 +53,17 @@ organ_sp <- organ %>%
   mutate(year_sp_2012 = (date > "2012-10-1") * (date - as.Date("2012-10-1")), 
          year_sp_2016 = (date > "2016-5-1") * (date - as.Date("2016-5-1")), 
          year_sp_2017 = (date > "2017-2-14") * (date - as.Date("2017-2-14")),
-         total_days = date - as.Date("2008-09-01"))
+         total_days = date - as.Date("2008-09-01")) %>% 
+  filter(!(county %in% c("TOTAL NYS", "Cattauragus", "St Lawrence"))) %>% 
+  mutate(opo = as_factor(opo), 
+         opo = fct_relevel(opo, 
+                           "New York Organ Donor Network", 
+                           "Center for Donation and Transplant in New York", 
+                           "UNYTS", 
+                           "Finger Lakes Donor Recovery Network"))
 ```
 
-Extra county level data came from Area Health Resources Files (AHRF). AHRF data collects healthcare related information and demographics at the county level for every county in the United States. Specific variables were chosen from AHRF to be included in this analysis. AHRF data is provided as a SAS datafile with un-informative variable names for over 3000 variables, as such extracting specific variables presented a challenge. Variables labels in SAS are recorded as an variable attribute in R. The following code was used to extract variable labels for variable selection and then pull said variables.
+Extra county level data came from Area Health Resources Files (AHRF). AHRF data collects healthcare related information and demographics at the county level for every county in the United States. Specific variables were chosen from AHRF to be included in this analysis. AHRF data is provided as a SAS datafile with un-informative variable names for over 3000 variables; as such, extracting specific variables presented a challenge. Variables labels in SAS are recorded as a variable attribute in R. The following code was used to extract the specific variables used in our analyses.
 
 ``` r
 library(haven)
@@ -81,11 +99,11 @@ for (i in 1:ncol(ahrf)) {
 }
 
 for (i in 1:length(keep_names)) {
-  names(keep_names)[i] <- "lulz"
+  names(keep_names)[i] <- "label"
 }
 
 keep_names <- data.frame(keep_names) %>% 
-  gather(keep, label, lulz:lulz.17) %>% 
+  gather(keep, label, label:label.17) %>% 
   select(label)
 
 data.table::setnames(ahrf, old = keep_var, new = keep_names$label)
@@ -100,6 +118,35 @@ ahrf %>%
 
 Exploratory analyses
 --------------------
+
+``` r
+lowest_3_counties = organ %>% 
+  filter(date == as.Date("2018-09-01")) %>% 
+  filter(county != "TOTAL NYS") %>%
+  arrange(eligible_population_enrolled) %>%
+  top_n(n = -3, eligible_population_enrolled)
+
+top_county = organ %>% 
+  filter(date == as.Date("2018-09-01")) %>% 
+  filter(county != "TOTAL NYS") %>%
+  arrange(eligible_population_enrolled) %>%
+  top_n(n = 1, eligible_population_enrolled)
+
+organ %>% 
+  filter(date == as.Date("2018-09-01")) %>% 
+  filter(county != "TOTAL NYS") %>%
+  ggplot(aes(x = population_18_estimate, y = eligible_population_enrolled)) +
+    geom_point() +
+    labs(title = "Eligible Population vs Percent Enrolled by County",
+         x = "Estimated Population 18 and Over",
+         y = "Percent of Eligible Population Enrolled") +
+    geom_text_repel(data = lowest_3_counties, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county)) +
+    geom_text_repel(data = top_county, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county))
+```
+
+<img src="p8105_final_report_files/figure-markdown_github/population vs. percent-1.png" width="75%" />
+
+This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that allign with those of neighboring states, such as New Jersey and Connecticut.
 
 Formal analyses
 ---------------
@@ -146,6 +193,8 @@ Time (year)
 </tr>
 </tbody>
 </table>
+    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
+
 <img src="p8105_final_report_files/figure-markdown_github/overall time-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -205,6 +254,8 @@ Time (year)
 </tr>
 </tbody>
 </table>
+    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
+
 <img src="p8105_final_report_files/figure-markdown_github/spline 2012-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -264,6 +315,8 @@ Time (year)
 </tr>
 </tbody>
 </table>
+    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
+
 <img src="p8105_final_report_files/figure-markdown_github/spline 2016-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -323,6 +376,8 @@ Time (year)
 </tr>
 </tbody>
 </table>
+    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
+
 <img src="p8105_final_report_files/figure-markdown_github/spline 2017-1.png" width="75%" />
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
@@ -428,6 +483,8 @@ Time (year)
 </tr>
 </tfoot>
 </table>
+    ## Don't know how to automatically pick scale for object of type difftime. Defaulting to continuous.
+
 <img src="p8105_final_report_files/figure-markdown_github/all splines-1.png" width="75%" />
 
 Discussion

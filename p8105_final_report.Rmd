@@ -19,18 +19,7 @@ library(rvest)
 library(httr)
 library(ggrepel)
 
-#using data cleaned in api_pull.rmd file
-
 theme_set(theme_bw())
-
-organ_sp <- read_csv("data/organ_spline.csv") %>% 
-  filter(!(county %in% c("TOTAL NYS", "Cattauragus", "St Lawrence"))) %>% 
-  mutate(opo = as_factor(opo), 
-         opo = fct_relevel(opo, 
-                           "New York Organ Donor Network", 
-                           "Center for Donation and Transplant in New York", 
-                           "UNYTS", 
-                           "Finger Lakes Donor Recovery Network"))
 ```
 
 |Name            | Uni       |
@@ -65,7 +54,7 @@ What are some factors that predict county donor designation share?
 
 New York State organ donor data was pulled from New York's official public data [API](https://health.data.ny.gov/Health/Donate-Life-Organ-and-Tissue-Donor-Registry-Enroll/sqk8-8a2h/data?fbclid=IwAR0DjHPMd3up76Cq1bMH0z12f_vr4rLz5YwtMPcT2kc_a5nP-nVJlDEinNE). 
 
-```{r eval = FALSE}
+```{r ny api data, message = FALSE}
 organ <- GET("https://health.data.ny.gov/resource/km5a-7zrs.csv?$limit=10000") %>% 
   content("parsed") %>%
   janitor::clean_names() %>%
@@ -80,15 +69,22 @@ organ <- GET("https://health.data.ny.gov/resource/km5a-7zrs.csv?$limit=10000") %
 
 Splines were created in correspondence with three major policy changes designed to increase donor registration. In order to include time as a variable dates were converted to the number of days since the first data point in the database (September 1, 2008). 
 
-```{r eval = FALSE}
+```{r spline info}
 organ_sp <- organ %>% 
   mutate(year_sp_2012 = (date > "2012-10-1") * (date - as.Date("2012-10-1")), 
          year_sp_2016 = (date > "2016-5-1") * (date - as.Date("2016-5-1")), 
          year_sp_2017 = (date > "2017-2-14") * (date - as.Date("2017-2-14")),
-         total_days = date - as.Date("2008-09-01"))
+         total_days = date - as.Date("2008-09-01")) %>% 
+  filter(!(county %in% c("TOTAL NYS", "Cattauragus", "St Lawrence"))) %>% 
+  mutate(opo = as_factor(opo), 
+         opo = fct_relevel(opo, 
+                           "New York Organ Donor Network", 
+                           "Center for Donation and Transplant in New York", 
+                           "UNYTS", 
+                           "Finger Lakes Donor Recovery Network"))
 ```
 
-Extra county level data came from Area Health Resources Files (AHRF). AHRF data collects healthcare related information and demographics at the county level for every county in the United States. Specific variables were chosen from AHRF to be included in this analysis. AHRF data is provided as a SAS datafile with un-informative variable names for over 3000 variables, as such extracting specific variables presented a challenge. Variables labels in SAS are recorded as an variable attribute in R. The following code was used to extract variable labels for variable selection and then pull said variables. 
+Extra county level data came from Area Health Resources Files (AHRF). AHRF data collects healthcare related information and demographics at the county level for every county in the United States. Specific variables were chosen from AHRF to be included in this analysis. AHRF data is provided as a SAS datafile with un-informative variable names for over 3000 variables; as such, extracting specific variables presented a challenge. Variables labels in SAS are recorded as a variable attribute in R. The following code was used to extract the specific variables used in our analyses. 
 
 ```{r eval = FALSE}
 library(haven)
@@ -124,11 +120,11 @@ for (i in 1:ncol(ahrf)) {
 }
 
 for (i in 1:length(keep_names)) {
-  names(keep_names)[i] <- "lulz"
+  names(keep_names)[i] <- "label"
 }
 
 keep_names <- data.frame(keep_names) %>% 
-  gather(keep, label, lulz:lulz.17) %>% 
+  gather(keep, label, label:label.17) %>% 
   select(label)
 
 data.table::setnames(ahrf, old = keep_var, new = keep_names$label)
@@ -145,22 +141,21 @@ ahrf %>%
 ## Exploratory analyses
 
 ```{r population vs. percent, results = "hide", message = FALSE, warning = FALSE}
-
 lowest_3_counties = organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
-  filter(county!= "TOTAL NYS") %>%
+  filter(county != "TOTAL NYS") %>%
   arrange(eligible_population_enrolled) %>%
   top_n(n = -3, eligible_population_enrolled)
 
 top_county = organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
-  filter(county!= "TOTAL NYS") %>%
+  filter(county != "TOTAL NYS") %>%
   arrange(eligible_population_enrolled) %>%
   top_n(n = 1, eligible_population_enrolled)
 
 organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
-  filter(county!= "TOTAL NYS") %>%
+  filter(county != "TOTAL NYS") %>%
   ggplot(aes(x = population_18_estimate, y = eligible_population_enrolled)) +
     geom_point() +
     labs(title = "Eligible Population vs Percent Enrolled by County",
@@ -168,8 +163,6 @@ organ %>%
          y = "Percent of Eligible Population Enrolled") +
     geom_text_repel(data = lowest_3_counties, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county)) +
     geom_text_repel(data = top_county, aes(x = population_18_estimate, y = eligible_population_enrolled, label = county))
-
-
 ```
 
 This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that allign with those of neighboring states, such as New Jersey and Connecticut. 
@@ -235,7 +228,7 @@ add_predictions(organ_sp, sp_12_model) %>%
   ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
   geom_line() +
   viridis::scale_color_viridis(discrete = TRUE) + 
-  theme(legend.position = "bottom")+ 
+  theme(legend.position = "bottom") + 
   guides(color = guide_legend(ncol = 2))
 ```
 
@@ -265,7 +258,7 @@ add_predictions(organ_sp, sp_16_model) %>%
   ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
   geom_line() + 
   viridis::scale_color_viridis(discrete = TRUE) + 
-  theme(legend.position = "bottom")+ 
+  theme(legend.position = "bottom") + 
   guides(color = guide_legend(ncol = 2))
 ```
 
