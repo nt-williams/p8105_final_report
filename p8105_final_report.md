@@ -153,6 +153,29 @@ Formal analyses
 
 Formal analyses of the effect of major policy changes were conducted using mixed-effects linear models with a random intercept; counties were treated as the clustering variable. The outcome was analyzed was the proportion of eligible adults registered with one of four organ donor organizations. Four successive models were created: a model only analyzing a linear effect of time; a model including a term for a spline corresponding with a 2012 policy INSERT WHAT THIS POLICY WAS; a model including a term for a spline corresponding with a 2016 policy INSERT WHAT THIS POLICY WAS; a model including a term for a spline corresponding with a 2017 policy that lowered the age from eligible enrollees from 18 to 16 years old; and a model that included all splines. All models were adjusted for the specific organization used in each county; models were compared using likelihood ratio tests.
 
+``` r
+organ_sp %>% 
+  ggplot() +
+  geom_smooth(aes(x = total_days, y = eligible_population_enrolled, color = opo, group = county), 
+              alpha = 0.4, se = FALSE) +
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  labs(title = "Proportion of eligible New Yorkers enrolled as organ donors",
+       subtitle = "Using smoothing line",
+       x = "Time as total days",
+       y = "Eligible population enrolled (%)") +
+  geom_vline(xintercept = 1491, linetype = "dashed") + 
+  geom_vline(xintercept = 2799, linetype = "dashed") + 
+  geom_vline(xintercept = 3088, linetype = "dashed") +
+  annotate(geom = "text", x = 1720, y = 53, label = "2012") +
+  annotate(geom = "text", x = 2600, y = 5, label = "2016") +
+  annotate(geom = "text", x = 3300, y = 5, label = "2017") +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank()) + 
+  guides(color = guide_legend(ncol = 2))
+```
+
+<img src="p8105_final_report_files/figure-markdown_github/no model-1.png" width="75%" />
+
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
