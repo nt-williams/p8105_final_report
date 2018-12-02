@@ -36,13 +36,28 @@ organ_sp <- read_csv("data/organ_spline.csv") %>%
 |Jack Yan        | xy2395    |
 |Alina Levine    | al3851    |
 
-[Click here for data](https://www.dropbox.com/sh/grlugs9hrksvkqr/AAAwILSg5UyMrW1CD7dWmHPNa?dl=0)
+[Click here for cleaned data used for analyses](https://www.dropbox.com/sh/grlugs9hrksvkqr/AAAwILSg5UyMrW1CD7dWmHPNa?dl=0)
 
 ## Motivation
 
 ## Initial questions
 
 ## Data 
+
+New York State organ donor data was pulled from New York's official public data [API](https://health.data.ny.gov/Health/Donate-Life-Organ-and-Tissue-Donor-Registry-Enroll/sqk8-8a2h/data?fbclid=IwAR0DjHPMd3up76Cq1bMH0z12f_vr4rLz5YwtMPcT2kc_a5nP-nVJlDEinNE). 
+
+```{r eval = FALSE}
+organ <- GET("https://health.data.ny.gov/resource/km5a-7zrs.csv?$limit=10000") %>% 
+  content("parsed") %>%
+  janitor::clean_names() %>%
+  filter(county != "Out of State" & county != "Unknown") %>%
+  mutate(year = as.character(year)) %>%
+  mutate(month = as.character(month)) %>%
+  mutate(dummy_day = as.character("01")) %>%
+  mutate(date = (str_c(year, month, dummy_day, sep = "-"))) %>%
+  mutate(date = as.Date(date, "%Y-%m-%d")) %>% 
+  rename(pop_2012 = "x2012_census_population")
+```
 
 ## Exploratory analyses
 
