@@ -46,7 +46,7 @@ organ <- GET("https://health.data.ny.gov/resource/km5a-7zrs.csv?$limit=10000") %
   rename(pop_2012 = "x2012_census_population")
 ```
 
-Splines were created in correspondence with three major policy changes designed to increase donor registration. In order to include time as a variable dates were converted to the number of days since the first data point in the database (September 1, 2008).
+Splines were created in correspondence with three major policy changes designed to increase donor registration. In order to include time as a variable dates were converted to the number of days since the first data point in the database (September 1, 2008). Counties Cattauragus and St. Lawrence were removed for analysis due to what we believe to be incorrect data entry (i.e. the proportion over the entire timeframe did not change at all for either of these counties).
 
 ``` r
 organ_sp <- organ %>% 
@@ -218,6 +218,29 @@ The above plot shows the increasing trend of organ donor enrollment over time. T
 
 The first model built only analyzed the effect of the 2012 policy. Main effects of time and the 2012 spline were found. Overall, every one year change resulted in a 2.88 percentage point increase in registry enrollment (95% CI: 2.84, 2.93) up to the beginning of the 2012 policy. However, after the 2012 policy went into effect the rate of increase in enrollment dropped 2.56 percentage points.
 
+``` r
+sp_12_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + year_sp_2012 + (1 | county), data = .)
+
+sp_12_model %>% 
+  broom::tidy() %>% 
+  filter(term %in% c("total_days", "year_sp_2012")) %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term), 
+         term = ifelse(term == "year_sp_2012", "2012 spline", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
+```
+
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -275,9 +298,48 @@ Time (year)
 </tr>
 </tbody>
 </table>
+``` r
+add_predictions(organ_sp, sp_12_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() +
+  geom_vline(xintercept = 1491, linetype = "dashed") +
+  annotate(geom = "text", x = 1720, y = 5, label = "2012") +
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  labs(title = "Proportion of eligible New Yorkers enrolled as organ donors", 
+       subtitle = "Modeling 2012 spline", 
+       x = "Time as total days", 
+       y = "Eligible population enrolled (%)") + 
+  theme(legend.position = "bottom", 
+        legend.title = element_blank()) + 
+  guides(color = guide_legend(ncol = 2))
+```
+
 <img src="p8105_final_report_files/figure-markdown_github/spline 2012-1.png" width="65%" />
 
 Modeling the effect of the 2016 policy, we once again found main effects of time and the 2016 spline. On average, every year increase resulted in an estimated 2.56 percentage point increase in eligible adult enrollment until the 2016 policy went into effect. After the 2016 policy, the estimated rate at which enrollment was changing increased by 0.79 percentage points (95% CI: 0.69, 0.89).
+
+``` r
+sp_16_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + year_sp_2016 + opo + (1 | county), data = .) 
+
+sp_16_model %>% 
+  broom::tidy() %>% 
+  filter(term %in% c("total_days", "year_sp_2016")) %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term), 
+         term = ifelse(term == "year_sp_2016", "2016 spline", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
+```
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -336,9 +398,49 @@ Time (year)
 </tr>
 </tbody>
 </table>
+``` r
+add_predictions(organ_sp, sp_16_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() + 
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  labs(title = "Proportion of eligible New Yorkers enrolled as organ donors", 
+       subtitle = "Modeling 2016 spline", 
+       x = "Time as total days", 
+       y = "Eligible population enrolled (%)") +
+  geom_vline(xintercept = 2799, linetype = "dashed") +
+  annotate(geom = "text", x = 2600, y = 5, label = "2016") +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank()) + 
+  guides(color = guide_legend(ncol = 2))
+```
+
 <img src="p8105_final_report_files/figure-markdown_github/spline 2016-1.png" width="65%" />
 
 Similarily to the 2016 spline, modeling the 2017 policy we found main effects of time and the 2017 spline. On average, every year increase corresponded with a 2.56 percentage point increase in proportion of eligible individuals enrolled. However, after the 2017 spline, the rate of change in enrollment increased by 1.7 percentage points (95% CI: 1.55, 1.85) to 4.26 percentage points.
+
+``` r
+sp_17_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + year_sp_2017 + opo + (1 | county), data = ., 
+       REML = FALSE)
+
+sp_17_model %>% 
+  broom::tidy() %>% 
+  filter(term %in% c("total_days", "year_sp_2017")) %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term), 
+         term = ifelse(term == "year_sp_2017", "2017 spline", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
+```
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -397,9 +499,52 @@ Time (year)
 </tr>
 </tbody>
 </table>
+``` r
+add_predictions(organ_sp, sp_17_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() +
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  labs(title = "Proportion of eligible New Yorkers enrolled as organ donors", 
+       subtitle = "Modeling 2017 spline", 
+       x = "Time as total days", 
+       y = "Eligible population enrolled (%)") + 
+  geom_vline(xintercept = 3088, linetype = "dashed") + 
+  annotate(geom = "text", x = 3300, y = 9, label = "2017") +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank()) + 
+  guides(color = guide_legend(ncol = 2))
+```
+
 <img src="p8105_final_report_files/figure-markdown_github/spline 2017-1.png" width="65%" />
 
 The final model analyzed accounted for all three separate policy changes. Main effects were found for all three splines. This model found that after the 2012 policy was enacted, the estimated rate of increase in population enrollement decreased by .98 percentage points (95% CI: -1.06, -0.90). However, after the 2016 policy went into effect the rate of enrollment increased again by 0.33 percentage points (95% CI: 0.039, 0.627). Lastly, after the 2017 policy went into effect the rate of enrollment incresaed again by 2.47 percentage points (95% CI: 2.05, 2.88). Ultimately, after all three policies came into effect the estimated increase in organ donor enrollment is 4.9 percentage points per year (an estimated net effect of 1.82 percentage points).
+
+``` r
+all_sp_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + year_sp_2012 + year_sp_2016 + year_sp_2017 + opo + 
+         (1 | county), data = ., REML = FALSE)
+
+all_sp_model %>% 
+  broom::tidy() %>% 
+  filter(term %in% c("total_days", "year_sp_2012", "year_sp_2016", "year_sp_2017")) %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term), 
+         term = ifelse(term == "year_sp_2012", "2012 spline", term), 
+         term = ifelse(term == "year_sp_2016", "2016 spline", term), 
+         term = ifelse(term == "year_sp_2017", "2017 spline", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped")) %>% 
+  footnote(general = "Splines correspond with dates in which 3 major policy changes were inacted. \nEstimates are adjusted for organ donor organization")
+```
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -504,7 +649,32 @@ Time (year)
 </tr>
 </tfoot>
 </table>
-<img src="p8105_final_report_files/figure-markdown_github/all splines-1.png" width="65%" />
+
+``` r
+add_predictions(organ_sp, all_sp_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() +
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  geom_vline(xintercept = 1491, linetype = "dashed") + 
+  geom_vline(xintercept = 2799, linetype = "dashed") + 
+  geom_vline(xintercept = 3088, linetype = "dashed") + 
+  annotate(geom = "text", x = 1720, y = 5, label = "2012") +
+  annotate(geom = "text", x = 2600, y = 5, label = "2016") +
+  annotate(geom = "text", x = 3300, y = 9, label = "2017") +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank()) + 
+  guides(color = guide_legend(ncol = 2)) + 
+  labs(title = "Proportion of eligible New Yorkers enrolled as organ donors", 
+       subtitle = "Modeling all splines", 
+       x = "Time as total days", 
+       y = "Eligible population enrolled (%)")
+```
+
+<img src="p8105_final_report_files/figure-markdown_github/all splines plot-1.png" width="65%" />
 
 Discussion
 ----------
+
+Using mixed-effects models we did find main effects of all three policies that were targeted at increasing organ donor enrollment. However, it is important to note that we cannot firmly draw any causal conclusions from the present analysis. While increases organ donor enrollment did coincide with major policy changes in New York, we did not compare the trends of enrollment in New York with those of the greater United States or another state that did not enact any policy during the same timeframe and thus did not establish a counter-factual. As such, we cannot rule out that the results we observed simply reflect a general trend in the United States and not any policy taken by the state of New York. That being said, our models do show a effects of policy changes.
+
+While the policies were designed to increase enrollment, it appears the 2012 policy might have had an opposite effect. The 2012 policy mandated that when residents of New York obtained a new driver's license...
