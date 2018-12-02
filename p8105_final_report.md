@@ -116,6 +116,38 @@ ahrf %>%
   write_csv("data/ahrf_select_data.csv")
 ```
 
+To explore county-level factors that may affect registration rate, we combined the organ donor data and AHRF dataset for further analysis. We used the organ registration rate in September 2018 only. Steps were followed as below to clean the data. Some original AHRF variables were divided by total population to generate percentages that are easier to interprete in a linear model.
+
+``` r
+organ_2018_09 =
+  organ %>%
+  filter(date == '2018-09-01') %>% 
+  rename(percent_enrolled = eligible_population_enrolled)
+
+demo_ny = 
+  read.csv("./data/ahrf_select_data.csv") %>% as.tibble() %>% 
+  rename(county = county_name) 
+
+combined_df = 
+  inner_join(by = 'county', organ_2018_09, demo_ny) %>%
+  dplyr::select(county, opo, population_18_estimate, registry_enrollments, percent_enrolled,
+         standardzd_per_capita_medcr_cost_fee_for_service_2015:percent_educ_hlth_care_soc_asst_2011_15) %>% 
+  mutate(opo = fct_relevel(opo, "New York Organ Donor Network")) %>% 
+  mutate(
+    pop_total_2015 =  (pop_total_female_2015 + pop_total_male_2015) ,
+    percent_male_2015 = (100 * (pop_total_male_2015 / pop_total_2015)) %>% round(., digits = 2),
+    percent_white_2015 = (100 * (pop_white_female_2015 + pop_white_male_2015) / pop_total_2015) %>% round(., digits = 2),
+    percent_black_2015 = (100 * (pop_black_african_amer_female_2015 + pop_black_african_amer_male_2015) / pop_total_2015) %>% round(., digits = 2) ,
+    percent_asian_2015 = (100 * (pop_asian_female_2015 + pop_asian_male_2015) / pop_total_2015) %>% round(., digits = 2),
+    percent_medicare_enrollment_2015 = (medicare_enrollment_aged_tot_2015 * 100 / pop_total_2015) %>% round(., digits = 2)) %>% 
+  dplyr::select(-(pop_total_male_2015:pop_asian_female_2015), -population_estimate_2016, -medicare_enrollment_aged_tot_2015) %>% 
+  dplyr::select(county, percent_enrolled, everything())
+
+regression_df =
+  combined_df %>% 
+  dplyr::select(-county)
+```
+
 Exploratory analyses
 --------------------
 
