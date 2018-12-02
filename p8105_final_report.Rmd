@@ -1,6 +1,10 @@
 ---
 title: "Analyzing trends of organ donor enrollment in New York state"
-output: github_document
+output: 
+  github_document:
+    md_extensions: +tex_math_dollars
+                   +raw_html
+always_allow_html: yes
 ---
 
 ```{r setup and data import, include=FALSE}
@@ -46,6 +50,170 @@ organ_sp <- read_csv("data/organ_spline.csv") %>%
 
 Formal analyses of the effect of major policy changes were conducted using mixed-effects linear models with a random intercept; counties were treated as the clustering variable. The outcome was analyzed was the proportion of eligible adults registered with one of four organ donor organizations. Four successive models were created: a model only analyzing a linear effect of time; a model including a term for a spline corresponding with a 2012 policy INSERT WHAT THIS POLICY WAS; a model including a term for a spline corresponding with a 2016 policy INSERT WHAT THIS POLICY WAS; a model including a term for a spline corresponding with a 2017 policy that lowered the age from eligible enrollees from 18 to 16 years old; and a model that included all splines. All models were adjusted for the specific organization used in each county; models were compared using likelihood ratio tests. 
 
+```{r overall time, echo = FALSE}
+no_sp_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + opo + (1 | county), data = ., 
+       REML = FALSE)
+
+no_sp_model %>% 
+  broom::tidy() %>% 
+  filter(term == "total_days") %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3, escape = F) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
+
+add_predictions(organ_sp, no_sp_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() + 
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  theme(legend.position = "bottom") + 
+  guides(color = guide_legend(ncol = 2))
+```
+
+```{r spline 2012, echo = FALSE}
+sp_12_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + year_sp_2012 + (1 | county), data = .)
+
+sp_12_model %>% 
+  broom::tidy() %>% 
+  filter(term %in% c("total_days", "year_sp_2012")) %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term), 
+         term = ifelse(term == "year_sp_2012", "2012 spline", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
+
+add_predictions(organ_sp, sp_12_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() +
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  theme(legend.position = "bottom")+ 
+  guides(color = guide_legend(ncol = 2))
+```
+
+```{r spline 2016, echo = FALSE}
+sp_16_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + year_sp_2016 + opo + (1 | county), data = .) 
+
+sp_16_model %>% 
+  broom::tidy() %>% 
+  filter(term %in% c("total_days", "year_sp_2016")) %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term), 
+         term = ifelse(term == "year_sp_2016", "2016 spline", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
+
+add_predictions(organ_sp, sp_16_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() + 
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  theme(legend.position = "bottom")+ 
+  guides(color = guide_legend(ncol = 2))
+```
+
+```{r spline 2017, echo = FALSE}
+sp_17_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + year_sp_2017 + opo + (1 | county), data = ., 
+       REML = FALSE)
+
+sp_17_model %>% 
+  broom::tidy() %>% 
+  filter(term %in% c("total_days", "year_sp_2017")) %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term), 
+         term = ifelse(term == "year_sp_2017", "2017 spline", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
+
+add_predictions(organ_sp, sp_17_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() +
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  theme(legend.position = "bottom") + 
+  guides(color = guide_legend(ncol = 2))
+```
+
+```{r all splines, echo = FALSE}
+all_sp_model <- organ_sp %>% 
+  lmer(eligible_population_enrolled ~ total_days + year_sp_2012 + year_sp_2016 + year_sp_2017 + opo + 
+         (1 | county), data = ., REML = FALSE)
+
+all_sp_model %>% 
+  broom::tidy() %>% 
+  filter(term %in% c("total_days", "year_sp_2012", "year_sp_2016", "year_sp_2017")) %>% 
+  mutate(estimate_year = estimate * 365, 
+         se_year = std.error * 365, 
+         ci_low = estimate_year - 1.96*se_year, 
+         ci_upper = estimate_year + 1.96*se_year) %>% 
+  mutate(term = ifelse(term == "total_days", "Time (year)", term), 
+         term = ifelse(term == "year_sp_2012", "2012 spline", term), 
+         term = ifelse(term == "year_sp_2016", "2016 spline", term), 
+         term = ifelse(term == "year_sp_2017", "2017 spline", term)) %>% 
+  select(term, estimate_year, se_year, ci_low, ci_upper) %>% 
+  rename("Term" = term, 
+         "Coefficient" = estimate_year, 
+         "SE" = se_year, 
+         "Lower bound" = ci_low, 
+         "Upper bound" = ci_upper) %>% 
+  knitr::kable(digits = 3) %>% 
+  kable_styling(full_width = F, bootstrap_options = c("hover", "striped")) %>% 
+  footnote(general = "Splines correspond with dates in which 3 major policy changes were inacted. \nEstimates are adjusted for organ donor organization")
+
+add_predictions(organ_sp, all_sp_model) %>% 
+  ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
+  geom_line() +
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  geom_vline(xintercept = 1491, linetype = "dashed") + 
+  geom_vline(xintercept = 2799, linetype = "dashed") + 
+  geom_vline(xintercept = 3088, linetype = "dashed") + 
+  annotate(geom = "text", x = 1720, y = 5, label = "2012") +
+  annotate(geom = "text", x = 2600, y = 5, label = "2016") +
+  annotate(geom = "text", x = 3300, y = 9, label = "2017") +
+  theme(legend.position = "bottom", 
+        legend.title = element_blank()) + 
+  guides(color = guide_legend(ncol = 2)) + 
+  labs(title = "Proportion of organ donors in NY counties", 
+       x = "Days since start of data collection",
+       y = "% enrolled as donors")
+```
 
 
 ## Discussion
