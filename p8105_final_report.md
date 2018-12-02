@@ -637,7 +637,7 @@ add_predictions(organ_sp, all_sp_model) %>%
        y = "Eligible population enrolled (%)")
 ```
 
-<img src="p8105_final_report_files/figure-markdown_github/all splines-1.png" width="65%" />
+<img src="p8105_final_report_files/figure-markdown_github/all splines plot-1.png" width="65%" />
 
 Discussion
 ----------
