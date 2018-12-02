@@ -150,7 +150,7 @@ organ %>%
                         label = county))
 ```
 
-<img src="p8105_final_report_files/figure-markdown_github/population vs. percent-1.png" width="75%" />
+<img src="p8105_final_report_files/figure-markdown_github/population vs. percent-1.png" width="65%" />
 
 This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that allign with those of neighboring states, such as New Jersey and Connecticut.
 
@@ -180,7 +180,11 @@ organ_sp %>%
   guides(color = guide_legend(ncol = 2))
 ```
 
-<img src="p8105_final_report_files/figure-markdown_github/no model-1.png" width="75%" />
+<img src="p8105_final_report_files/figure-markdown_github/no model-1.png" width="65%" />
+
+The above plot shows the increasing trend of organ donor enrollment over time. The dashed lines represent the beginning of the 3 policies we analyzed in this project.
+
+The first model built only analyzed the effect of the 2012 policy. Main effects of time and the 2012 spline were found. Overall, every one year change resulted in a 2.88 percentage point increase in registry enrollment (95% CI: 2.84, 2.93) up to the beginning of the 2012 policy. However, after the 2012 policy went into effect the rate of increase in enrollment dropped 2.56 percentage points.
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -239,7 +243,9 @@ Time (year)
 </tr>
 </tbody>
 </table>
-<img src="p8105_final_report_files/figure-markdown_github/spline 2012-1.png" width="75%" />
+<img src="p8105_final_report_files/figure-markdown_github/spline 2012-1.png" width="65%" />
+
+Modeling the effect of the 2016 policy, we once again found main effects of time and the 2016 spline. On average, every year increase resulted in an estimated 2.56 percentage point increase in eligible adult enrollment until the 2016 policy went into effect. After the 2016 policy, the estimated rate at which enrollment was changing increased by 0.79 percentage points (95% CI: 0.69, 0.89).
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -298,7 +304,9 @@ Time (year)
 </tr>
 </tbody>
 </table>
-<img src="p8105_final_report_files/figure-markdown_github/spline 2016-1.png" width="75%" />
+<img src="p8105_final_report_files/figure-markdown_github/spline 2016-1.png" width="65%" />
+
+Similarily to the 2016 spline, modeling the 2017 policy we found main effects of time and the 2017 spline. On average, every year increase corresponded with a 2.56 percentage point increase in proportion of eligible individuals enrolled. However, after the 2017 spline, the rate of change in enrollment increased by 1.7 percentage points (95% CI: 1.55, 1.85) to 4.26 percentage points.
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -357,7 +365,9 @@ Time (year)
 </tr>
 </tbody>
 </table>
-<img src="p8105_final_report_files/figure-markdown_github/spline 2017-1.png" width="75%" />
+<img src="p8105_final_report_files/figure-markdown_github/spline 2017-1.png" width="65%" />
+
+The final model analyzed accounted for all three separate policy changes. Main effects were found for all three splines. This model found that after the 2012 policy was enacted, the estimated rate of increase in population enrollement decreased by .98 percentage points (95% CI: -1.06, -0.90). However, after the 2016 policy went into effect the rate of enrollment increased again by 0.33 percentage points (95% CI: 0.039, 0.627). Lastly, after the 2017 policy went into effect the rate of enrollment incresaed again by 2.47 percentage points (95% CI: 2.05, 2.88). Ultimately, after all three policies came into effect the estimated increase in organ donor enrollment is 4.9 percentage points per year (an estimated net effect of 1.82 percentage points).
 
 <table class="table table-hover table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -462,7 +472,7 @@ Time (year)
 </tr>
 </tfoot>
 </table>
-<img src="p8105_final_report_files/figure-markdown_github/all splines-1.png" width="75%" />
+<img src="p8105_final_report_files/figure-markdown_github/all splines-1.png" width="65%" />
 
 Discussion
 ----------
