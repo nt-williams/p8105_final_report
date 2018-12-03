@@ -50,8 +50,14 @@ Over the last 6 years, the state government has passed into law several policies
 
 Was there a statewide change in the growth of donor designation share after any of these laws were passed? If there was, was this change seen in all counties or only a subset?
 
+
+
 Additionally, in 2016, the size of the eligible pool increased when the minimum age for joining the registry was lowered from eighteen to sixteen. We initially wondered if 16 and 17 year olds were more likely to register, given that they sign up for permits and licenses, and therefore, wondered if there would be an increase in the percentage of eligible people enrolling on the registry. However, while studying our data, we realized that the percent eligible population enrolled variable used the same denomenator (the estimated number of people at least 18), regardless of the year, so our measure was not technically measuring donor designation share after 2017, but rather the ratio between the number people enrolled and the number of people over 18. After the 2016 law, we expected this measure to increase, since the 16 and 17 year old enrollees would add to the numerator but not denomenator. Did this increase actually occur?  
 
+
+### County Characteristics
+
+What are some factors that predict the percentage of eligible people enrolled on the donor registry for each county?
 
 ### County Characteristics
 
@@ -303,6 +309,87 @@ combined_df %>%
 ```
 
 An organ procurement organization (OPO) is a non-profit organization that is responsible for the evaluation and procurement of deceased-donor organs for organ transplantation. There are 4 OPOs in the New York State, each with its own designated service area. From the plot above, we found that the distribution of registration rates in counties designated to the 4 OPOs are different. Obviously, the New York Organ Donor Network has the lowest distribution of Percent Enrollment, and will be used as the reference group in regression analysis.
+
+##Change of Slope Visualization: 2012
+
+```{r visualization 2012, message = FALSE, results = "hide", warning = FALSE}
+library(ggrepel)
+
+diff_diff_organ_2012 = organ %>%
+  filter(date == as.Date("2014-07-01") | date == as.Date("2012-07-01") | date == as.Date("2010-07-01")) %>%
+  select(county, date, eligible_population_enrolled) %>%
+  group_by(county) %>%
+  spread(value = eligible_population_enrolled, key = date) %>%
+  janitor::clean_names() %>%
+  mutate(slope_2012_2010 = (x2012_07_01-x2010_07_01)/as.integer(as.Date("2012-07-01")-as.Date("2010-07-01")),
+         slope_2014_2012 = (x2014_07_01-x2012_07_01)/as.integer(as.Date("2014-07-01")-as.Date("2012-07-01")),
+         slope_diff = slope_2014_2012-slope_2012_2010) %>%
+  ungroup() %>%
+  mutate(county = fct_reorder(county, slope_diff)) %>%
+  mutate(is_total_nys = ifelse(county == "TOTAL NYS", 1, 0))
+
+diff_diff_organ_ny_2012 = filter(diff_diff_organ_2012, county %in% c("TOTAL NYS"))
+
+
+  ggplot(diff_diff_organ_2012, aes(x = county, y = slope_diff)) +
+    geom_point() +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    theme(legend.position = "none") +
+    geom_text_repel(data = diff_diff_organ_ny_2012, 
+                    aes(x = county, 
+                        y = slope_diff, 
+                        label = county), nudge_x = -2.5, nudge_y = .001) +
+    labs(title = "Slope Change After 2012 Policy",
+         y = "Slope Change")
+    
+
+```
+
+We calculated the average donor designation share rate of increase for each county and for the total New York State using three points: a point before Lauren's Law was passed in 2012, a point at the time of the law's passage, and a point two years after. The slope was calculated by dividing the change in donor designation share and dividing by the number of days between the two points used. Almost every county saw negative changes in slope.
+
+##Change of Slope Visualization: 2017
+
+```{r visualization 2017, message = FALSE, results = "hide", warning = FALSE}
+
+diff_diff_organ_2017 = organ %>%
+  filter(date == as.Date("2018-09-01") | date == as.Date("2017-02-01") | date == as.Date("2015-07-01")) %>%
+  select(county, date, eligible_population_enrolled) %>%
+  group_by(county) %>%
+  spread(value = eligible_population_enrolled, key = date) %>%
+  janitor::clean_names() %>%
+  mutate(slope_2017_2015 = (x2017_02_01-x2015_07_01)/as.integer(as.Date("2017-02-01")-as.Date("2015-07-01")),
+         slope_2018_2017 = (x2018_09_01-x2017_02_01)/as.integer(as.Date("2018-09-01")-as.Date("2017-02-01")),
+         slope_diff = slope_2018_2017-slope_2017_2015) %>%
+  ungroup() %>%
+  mutate(county = fct_reorder(county, slope_diff)) %>%
+  mutate(is_total_nys = ifelse(county == "TOTAL NYS", 1, 0))
+
+diff_diff_organ_ny_2017 = filter(diff_diff_organ_2017, county %in% c("TOTAL NYS"))
+
+
+  ggplot(diff_diff_organ_2017, aes(x = county, y = slope_diff)) +
+    geom_point() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    theme(legend.position = "none") +
+    geom_text_repel(data = diff_diff_organ_ny_2017, 
+                    aes(x = county, 
+                        y = slope_diff, 
+                        label = county), nudge_x = -2.5, nudge_y = .01) +
+    labs(title = "Slope Change After 2017 Policy",
+         y = "Slope Change")
+    
+
+
+```
+
+We used one and a half year increments rather than two year increments because our data does not reach two years after the passage of the law. Almost all the slopes increase after 2017. NY county, one of the larger counties in NY, is one of the 7 counties that has a decreasing average slope. The next section will test significance of these changes in slope. 
+
+
+
+
+
+
 
 ## Formal analyses
 
