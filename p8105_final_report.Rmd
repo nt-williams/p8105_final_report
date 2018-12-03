@@ -560,8 +560,7 @@ We found that type of OPO that conducts the registration affects registration ra
 
 #### Model validation 
 
-```{r bootstrap, eval=F}
-## Bootstrapping
+```{r bootstrap, eval = FALSE}
 bootstrap_df <-  
   regression_df %>% 
   modelr::bootstrap(n = 100) %>% 
@@ -589,7 +588,8 @@ bootstrap_df %>%
 ```
 
 ```{r cross validation}
-## Cross Validation
+set.seed(10)
+
 cv_df <- crossv_mc(regression_df, 100) 
 
 cv_df <-  
@@ -610,7 +610,6 @@ cv_df <-
 cv_df %>% 
   ggplot(aes(x = model, y = rmse)) + geom_violin()
 ```
-
 
 ## Discussion
 
