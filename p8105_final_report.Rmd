@@ -57,7 +57,6 @@ Additionally, in 2016, the size of the eligible pool increased when the minimum 
 
 What are some factors that predict county donor designation share?
 
-
 ## Data 
 
 New York State organ donor data was pulled from New York's official public data [API](https://health.data.ny.gov/Health/Donate-Life-Organ-and-Tissue-Donor-Registry-Enroll/sqk8-8a2h/data?fbclid=IwAR0DjHPMd3up76Cq1bMH0z12f_vr4rLz5YwtMPcT2kc_a5nP-nVJlDEinNE). 
@@ -268,6 +267,8 @@ ny_map <- ggplot() +
 
 ny_map
 ```
+
+The above chloropleth shows how different counties in 2018 range in the proportion of eligible adults enrolled as organ donors. Interestingly, the counties that make up and surround New York City have among the lowest enrollment rates. 
 
 ```{r}
 county_enrollment_plot = 
@@ -615,7 +616,9 @@ cv_df %>%
 
 Using mixed-effects models we did find main effects of all three policies that were targeted at increasing organ donor enrollment. However, it is important to note that we cannot firmly draw any causal conclusions from the present analysis. While increases organ donor enrollment did coincide with major policy changes in New York, we did not compare the trends of enrollment in New York with those of the greater United States or another state that did not enact any policy during the same timeframe and thus did not establish a counter-factual. As such, we cannot rule out that the results we observed simply reflect a general trend in the United States and not any policy taken by the state of New York. That being said, our models do show a effects of policy changes. 
 
-While the policies were designed to increase enrollment, it appears the 2012 policy might have had an opposite effect. The 2012 policy mandated that when residents of New York obtained a new driver's license, they must either check a box to skip a question asking them if they want to enroll or must enroll in the registry. For future research about this policy, it would be helpful to look at DMV registration rate (percentage of people applying for dmv identifications who enroll), as this 2012 policy was specifically targeted toward the DMV. 
+While the policies were designed to increase enrollment, it appears the 2012 policy might have had an opposite effect. The 2012 policy mandated that when residents of New York obtained a new driver's license, they must either check a box to skip a question asking them if they want to enroll or must enroll in the registry. For future research about this policy, it would be helpful to look at DMV registration rate (percentage of people applying for dmv identifications who enroll), as this 2012 policy was specifically targeted at DMV enrollees. 
+
+The 2017 spline corresponds with the 2016 lowering of eligible age law and appears to have had potentially the largest impact on registration. Based on our model, further research should be conducted to investigate whether younger invididuals are more likley to register as donors. 
 
 
 
