@@ -520,7 +520,8 @@ The first model evaluated was: percent_enrolled ~ opo + percent_persons_25_w_hs_
 
 ```{r}
 county_one <- regression_df %>% 
-  lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, data = .)
+  lm(percent_enrolled ~ opo + percent_hs_diploma + percent_college + percent_male_2015 + percent_asian_2015 +
+       percent_medcr_2015, data = .)
 
 county_one %>% 
   broom::glance() %>% 
@@ -535,7 +536,8 @@ The second model was built based on our hypothesis that factors including OPO, m
 
 ```{r}
 county_two <- regression_df %>% 
-  lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .) 
+  lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 + percent_white_2015 + percent_hs_diploma +
+       percent_college, data = .) 
 
 county_two %>% 
   broom::glance() %>% 
@@ -550,7 +552,8 @@ The final model was adopted from model 2, adding interaction term between enthni
 
 ```{r}
 county_final <- regression_df %>%  
-  lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .) 
+  lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 + percent_white_2015*percent_hs_diploma +
+       percent_college, data = .) 
 
 county_final %>% 
   broom::glance() %>% 
@@ -567,40 +570,45 @@ We found that type of OPO that conducts the registration affects registration ra
 
 ```{r bootstrap, eval=F}
 ## Bootstrapping
-bootstrap_df = 
+bootstrap_df <-  
   regression_df %>% 
   modelr::bootstrap(n = 100) %>% 
   mutate(
-    model_1 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, data = .x)),
-    model_2 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x)),
-    model_3 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x))) 
+    model_1 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_hs_diploma + percent_college + percent_male_2015 +
+                                      percent_asian_2015 + percent_medcr_2015, data = .x)),
+    model_2 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 +
+                                      percent_white_2015 + percent_hs_diploma + percent_college, data = .x)),
+    model_3 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 +
+                                      percent_white_2015*percent_hs_diploma + percent_college, data = .x))) 
 
 bootstrap_df %>% 
   mutate(
     result_1 = purrr::map(model_1, broom::tidy),
     result_2 = purrr::map(model_2, broom::tidy),
     result_3 = purrr::map(model_3, broom::tidy)) %>% 
-  dplyr::select(-strap, -(model_1:model_3))  %>% 
+  select(-strap, -(model_1:model_3))  %>% 
   gather(key = model, value = result, result_1:result_3) %>% 
   unnest() %>% 
-  dplyr::filter(term != "(Intercept)") %>% 
+  filter(term != "(Intercept)") %>% 
   group_by(model, term) %>% 
   summarize(boot_se = sd(estimate)) %>% 
-  spread(key = model, value = boot_se)
+  spread(key = model, value = boot_se) %>% 
+  kable()
 ```
 
-```{r}
+```{r cross validation}
 ## Cross Validation
+cv_df <- crossv_mc(regression_df, 100) 
 
-cv_df = 
-  crossv_mc(regression_df, 100) 
-
-cv_df = 
+cv_df <-  
   cv_df %>% 
   mutate(
-    model_1 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, data = .x)),
-    model_2 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x)),
-    model_3 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x))) %>% 
+    model_1 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_hs_diploma + percent_college + percent_male_2015 +
+                                      percent_asian_2015 + percent_medcr_2015, data = .x)),
+    model_2 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 +
+                                      percent_white_2015 + percent_hs_diploma + percent_college, data = .x)),
+    model_3 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 +
+                                      percent_white_2015*percent_hs_diploma + percent_college, data = .x))) %>% 
   mutate(rmse_1 = purrr::map2_dbl(model_1, test, ~rmse(model = .x, data = .y)),
          rmse_2 = purrr::map2_dbl(model_2, test, ~rmse(model = .x, data = .y)),
          rmse_3 = purrr::map2_dbl(model_3, test, ~rmse(model = .x, data = .y))) %>% 
