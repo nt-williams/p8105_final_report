@@ -1,5 +1,3 @@
-# p8105_final_report
-Final report for Data Science final project
 
 This repo contains the final report for our P8105 final project. Our team members are Sijia Yue, Alina Levine, Nick Williams, Shuliang Deng, and Jack Yan. 
 
