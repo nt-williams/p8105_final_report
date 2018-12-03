@@ -181,7 +181,15 @@ combined_df <-
 
 regression_df <- 
   combined_df %>% 
-  select(-county)
+  select(-county) %>% 
+  rename(pop_18 = population_18_estimate, 
+         reg_enroll = registry_enrollments, 
+         medcr_fee_2015 = standardzd_per_capita_medcr_cost_fee_for_service_2015, 
+         percent_hs_diploma = percent_persons_25_w_hs_diploma_2011_15,
+         percent_college = percent_persons_25_w_4_yrs_college_2011_15,
+         percent_soc_asst = percent_educ_hlth_care_soc_asst_2011_15, 
+         pop_2015 = pop_total_2015, 
+         percent_medcr_2015 = percent_medicare_enrollment_2015)
 ```
 
 ## Exploratory analyses
@@ -504,34 +512,53 @@ The first model was built using criterion-based methods, searching for subsets o
 
 ```{r, eval = FALSE}
 # Summary of models for each size (one model per size)
-b = regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NULL)
-summary(b) 
+subsets <- regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NULL)
+summary(subsets) 
 ```
 
-The first model is: percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015.
+The first model evaluated was: percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015.
+
 ```{r}
-fit_1 = lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, regression_df)
-fit_1 %>% broom::glance()
-fit_1 %>% broom::tidy()
+county_one <- regression_df %>% 
+  lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, data = .)
+
+county_one %>% 
+  broom::glance() %>% 
+  kable()
+
+county_one %>% 
+  broom::tidy() %>% 
+  kable()
 ```
 
 The second model was built based on our hypothesis that factors including OPO, medicare enrollment, gender, ethnicity, and education status affect registration rate.
 
 ```{r}
-fit_2 =   lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = regression_df) 
-fit_2 %>% broom::glance()
-fit_2 %>% broom::tidy()
+county_two <- regression_df %>% 
+  lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .) 
+
+county_two %>% 
+  broom::glance() %>% 
+  kable()
+
+county_two %>% 
+  broom::tidy() %>% 
+  kable()
 ```
 
 The final model was adopted from model 2, adding interaction term between enthnicity and high school education.
 
 ```{r}
-fit_final = 
-  lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = regression_df) 
+county_final <- regression_df %>%  
+  lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .) 
 
-fit_final %>% broom::glance()
-fit_final %>%  broom::tidy()
+county_final %>% 
+  broom::glance() %>% 
+  kable()
 
+county_final %>%
+  broom::tidy() %>% 
+  kable()
 ```
 
 We found that type of OPO that conducts the registration affects registration rate. Percentage of medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate. 
