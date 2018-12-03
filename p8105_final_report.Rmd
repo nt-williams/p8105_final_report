@@ -19,7 +19,10 @@ library(rvest)
 library(httr)
 library(ggrepel)
 library(maps)
-
+library(plotly)
+library(modelr)
+library(leaps)
+library(patchwork)
 theme_set(theme_bw())
 ```
 
@@ -254,7 +257,50 @@ ny_map <- ggplot() +
 ny_map
 ```
 
+```{r}
+county_enrollment_plot = 
+  organ %>% 
+  filter(county != "TOTAL NYS") %>%
+  ggplot(aes(x = date, y = registry_enrollments, color = county)) +
+    geom_line() +
+    labs(x = "Date", 
+         y = "Persons enrolled", 
+         title = "Registry enrollments across time")
+
+ggplotly(county_enrollment_plot)
+```
+
+The registry enrollments had a generally increasing trend across the years. However, note a sudden change in registry enrollments on 2009-06-01 and 2017-10-1. Curiously, the enrollment even declined for some counties on 2017-10-1, which indicates a flaw in the data. 
+
+```{r}
+county_enrollment_rate_plot = 
+  organ %>% 
+  filter(county != "TOTAL NYS") %>%
+  ggplot(aes(x = date, y = eligible_population_enrolled, color = county)) +
+    geom_line() +
+    labs(x = "Date", 
+         y = "% Persons enrolled", 
+         title = "Registration rate across time")
+ggplotly(county_enrollment_rate_plot)
+```
+
+This plot shows the trend of registration rate from 2008 to 2018 for counties in New York State. Note that the registration rates for Counties Cattauragus and St Lawrence were not updated for most of the years.
+
+```{r}
+combined_df %>% 
+  ggplot(aes(x = opo, y = percent_enrolled)) +
+    geom_violin() +
+    labs(x = "OPO", 
+         y = "Percent of Eligible Population Enrolled",
+         title = "Distribution of Percent Enrollment by OPO") +
+   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = rel(1)))
+```
+
+An organ procurement organization (OPO) is a non-profit organization that is responsible for the evaluation and procurement of deceased-donor organs for organ transplantation. There are 4 OPOs in the New York State, each with its own designated service area. From the plot above, we found that the distribution of registration rates in counties designated to the 4 OPOs are different. Obviously, the New York Organ Donor Network has the lowest distribution of Percent Enrollment, and will be used as the reference group in regression analysis.
+
 ## Formal analyses
+
+### Effect of major policy changes
 
 Formal analyses of the effect of major policy changes were conducted using mixed-effects linear models with a random intercept; counties were treated as the clustering variable. The outcome was analyzed was the proportion of eligible adults registered with one of four organ donor organizations. Four successive models were created: a model only analyzing a linear effect of time; a model including a term for a spline corresponding with a 2012 policy INSERT WHAT THIS POLICY WAS; a model including a term for a spline corresponding with a 2016 policy INSERT WHAT THIS POLICY WAS; a model including a term for a spline corresponding with a 2017 policy that lowered the age from eligible enrollees from 18 to 16 years old; and a model that included all splines. All models were adjusted for the specific organization used in each county; models were compared using likelihood ratio tests. 
 
@@ -447,6 +493,93 @@ add_predictions(organ_sp, all_sp_model) %>%
        x = "Time as total days", 
        y = "Eligible population enrolled (%)")
 ```
+
+### County-level factors affecting registration rate
+
+The first model was built using criterion-based methods, searching for subsets of predictors with the optimal Cp and Adjusted R-squared.
+
+```{r, eval = FALSE}
+# Summary of models for each size (one model per size)
+b = regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NULL)
+summary(b) 
+```
+
+The first model is: percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015.
+```{r}
+fit_1 = lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, regression_df)
+fit_1 %>% broom::glance()
+fit_1 %>% broom::tidy()
+```
+
+The second model was built based on our hypothesis that factors including OPO, medicare enrollment, gender, ethnicity, and education status affect registration rate.
+
+```{r}
+fit_2 =   lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = regression_df) 
+fit_2 %>% broom::glance()
+fit_2 %>% broom::tidy()
+```
+
+The final model was adopted from model 2, adding interaction term between enthnicity and high school education.
+
+```{r}
+fit_final = 
+  lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = regression_df) 
+
+fit_final %>% broom::glance()
+fit_final %>%  broom::tidy()
+
+```
+
+We found that type of OPO that conducts the registration affects registration rate. Percentage of medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate. 
+
+#### Model validation 
+
+```{r bootstrap, eval=F}
+## Bootstrapping
+bootstrap_df = 
+  regression_df %>% 
+  modelr::bootstrap(n = 100) %>% 
+  mutate(
+    model_1 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, data = .x)),
+    model_2 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x)),
+    model_3 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x))) 
+
+bootstrap_df %>% 
+  mutate(
+    result_1 = purrr::map(model_1, broom::tidy),
+    result_2 = purrr::map(model_2, broom::tidy),
+    result_3 = purrr::map(model_3, broom::tidy)) %>% 
+  dplyr::select(-strap, -(model_1:model_3))  %>% 
+  gather(key = model, value = result, result_1:result_3) %>% 
+  unnest() %>% 
+  dplyr::filter(term != "(Intercept)") %>% 
+  group_by(model, term) %>% 
+  summarize(boot_se = sd(estimate)) %>% 
+  spread(key = model, value = boot_se)
+```
+
+```{r}
+## Cross Validation
+
+cv_df = 
+  crossv_mc(regression_df, 100) 
+
+cv_df = 
+  cv_df %>% 
+  mutate(
+    model_1 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, data = .x)),
+    model_2 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x)),
+    model_3 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x))) %>% 
+  mutate(rmse_1 = purrr::map2_dbl(model_1, test, ~rmse(model = .x, data = .y)),
+         rmse_2 = purrr::map2_dbl(model_2, test, ~rmse(model = .x, data = .y)),
+         rmse_3 = purrr::map2_dbl(model_3, test, ~rmse(model = .x, data = .y))) %>% 
+  select(-train, -test, -(model_1:model_3)) %>% 
+  gather(key = model, value = rmse, rmse_1:rmse_3)
+
+cv_df %>% 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+```
+
 
 ## Discussion
 
