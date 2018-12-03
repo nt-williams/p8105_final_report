@@ -193,6 +193,50 @@ organ %>%
 
 This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that allign with those of neighboring states, such as New Jersey and Connecticut.
 
+``` r
+organ_tidy <- organ %>% 
+  separate(location, c("lat", "long"), sep = ",") %>% 
+  mutate(long = str_replace(long, "\\)", ""),
+         long = as.numeric(long)) %>% 
+  mutate(lat = str_replace(lat, "\\(", ""),
+         lat = as.numeric(lat))
+
+ny <- map_data("state") %>%
+  filter(region == "new york")
+
+ny_county <- map_data("county") %>% 
+  filter(region == "new york") %>% 
+  as.tibble() %>% 
+  rename(county = subregion)
+
+organ_df <-  
+  organ_tidy %>% 
+  filter(date == "2018-09-01") %>% 
+  select(eligible_population_enrolled, county) %>% 
+  mutate(county = tolower(county)) %>% 
+  mutate(county = recode(county, 'cattauragus' = 'cattaraugus'))
+
+ny_county_combined <- full_join(organ_df, ny_county, by = 'county')
+
+ny_map <- ggplot() + 
+  geom_polygon(data = ny_county_combined, 
+               aes(x = long, y = lat, group = group, fill = eligible_population_enrolled)) +
+  geom_path(data = ny_county_combined, 
+            aes(x = long, y = lat, group = group), 
+            color = "white", size = 0.1) +
+  labs(title = "Proportion of eligible adults enrolled as organ donors in NY", 
+       x = 'Longitude', 
+       y = 'Latitude', 
+       fill = 'Enrollment (%)') +
+  coord_map() +
+  viridis::scale_fill_viridis(option = "magma", direction = -1) + 
+  theme_void()
+
+ny_map
+```
+
+<img src="p8105_final_report_files/figure-markdown_github/unnamed-chunk-2-1.png" width="70%" />
+
 Formal analyses
 ---------------
 
