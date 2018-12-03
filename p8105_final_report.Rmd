@@ -284,31 +284,20 @@ ggplotly(county_enrollment_plot)
 
 The registry enrollments had a generally increasing trend across the years. However, note a sudden change in registry enrollments on 2009-06-01 and 2017-10-1. Curiously, the enrollment even declined for some counties on 2017-10-1, which indicates a flaw in the data. 
 
-```{r}
-county_enrollment_rate_plot = 
-  organ %>% 
-  filter(county != "TOTAL NYS") %>%
-  ggplot(aes(x = date, y = eligible_population_enrolled, color = county)) +
-    geom_line() +
-    labs(x = "Date", 
-         y = "% Persons enrolled", 
-         title = "Registration rate across time")
-ggplotly(county_enrollment_rate_plot)
-```
-
-This plot shows the trend of registration rate from 2008 to 2018 for counties in New York State. Note that the registration rates for Counties Cattauragus and St Lawrence were not updated for most of the years.
-
-```{r}
+```{r dpi = 300}
 combined_df %>% 
+  mutate(opo = fct_recode(opo, 
+                          NYODN = "New York Organ Donor Network", 
+                          CDTNY = "Center for Donation and Transplant in New York", 
+                          FLDRN = "Finger Lakes Donor Recovery Network")) %>% 
   ggplot(aes(x = opo, y = percent_enrolled)) +
     geom_violin() +
     labs(x = "OPO", 
-         y = "Percent of Eligible Population Enrolled",
-         title = "Distribution of Percent Enrollment by OPO") +
-   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = rel(1)))
+         y = "Eligible Population Enrolled (%)",
+         title = "Distribution of Enrollment by OPO") 
 ```
 
-An organ procurement organization (OPO) is a non-profit organization that is responsible for the evaluation and procurement of deceased-donor organs for organ transplantation. There are 4 OPOs in the New York State, each with its own designated service area. From the plot above, we found that the distribution of registration rates in counties designated to the 4 OPOs are different. Obviously, the New York Organ Donor Network has the lowest distribution of Percent Enrollment, and will be used as the reference group in regression analysis.
+An organ procurement organization (OPO) is a non-profit organization that is responsible for the evaluation and procurement of deceased-donor organs for organ transplantation. There are 4 OPOs in the New York State, each with its own designated service area. From the plot above, we found that the distribution of registration rates in counties designated to the 4 OPOs are different. The New York Organ Donor Network has the lowest distribution of Percent Enrollment, and will be used as the reference group in regression analysis.
 
 ## Formal analyses
 
@@ -525,11 +514,12 @@ county_one <- regression_df %>%
 
 county_one %>% 
   broom::glance() %>% 
+  select(adj.r.squared, AIC) %>% 
   kable()
 
 county_one %>% 
   broom::tidy() %>% 
-  kable()
+  kable(digits = 3)
 ```
 
 The second model was built based on our hypothesis that factors including OPO, medicare enrollment, gender, ethnicity, and education status affect registration rate.
@@ -541,11 +531,12 @@ county_two <- regression_df %>%
 
 county_two %>% 
   broom::glance() %>% 
+  select(adj.r.squared, AIC) %>% 
   kable()
 
 county_two %>% 
   broom::tidy() %>% 
-  kable()
+  kable(digits = 3)
 ```
 
 The final model was adopted from model 2, adding interaction term between enthnicity and high school education.
@@ -557,14 +548,15 @@ county_final <- regression_df %>%
 
 county_final %>% 
   broom::glance() %>% 
+  select(adj.r.squared, AIC) %>% 
   kable()
 
 county_final %>%
   broom::tidy() %>% 
-  kable()
+  kable(digits = 3)
 ```
 
-We found that type of OPO that conducts the registration affects registration rate. Percentage of medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate. 
+We found that type of OPO that conducts the registration affects registration rate. Percentage of medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the sex `male` and race `white` are positively associated with registration rate. 
 
 #### Model validation 
 
