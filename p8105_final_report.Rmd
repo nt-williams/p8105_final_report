@@ -187,7 +187,15 @@ combined_df <-
 
 regression_df <- 
   combined_df %>% 
-  select(-county)
+  select(-county) %>% 
+  rename(pop_18 = population_18_estimate, 
+         reg_enroll = registry_enrollments, 
+         medcr_fee_2015 = standardzd_per_capita_medcr_cost_fee_for_service_2015, 
+         percent_hs_diploma = percent_persons_25_w_hs_diploma_2011_15,
+         percent_college = percent_persons_25_w_4_yrs_college_2011_15,
+         percent_soc_asst = percent_educ_hlth_care_soc_asst_2011_15, 
+         pop_2015 = pop_total_2015, 
+         percent_medcr_2015 = percent_medicare_enrollment_2015)
 ```
 
 ## Exploratory analyses
@@ -267,7 +275,7 @@ ny_map <- ggplot() +
 ny_map
 ```
 
-This map shows that the south eastern part of the state tends to have lower registration rates. 
+The above chloropleth shows how different counties in 2018 range in the proportion of eligible adults enrolled as organ donors. Interestingly, the counties that make up and surround New York City have among the lowest enrollment rates. 
 
 ```{r}
 county_enrollment_plot = 
@@ -300,17 +308,20 @@ This plot shows the trend of registration rate from 2008 to 2018 for counties in
 
 ```{r}
 combined_df %>% 
+  mutate(opo = fct_recode(opo, 
+                          NYODN = "New York Organ Donor Network", 
+                          CDTNY = "Center for Donation and Transplant in New York", 
+                          FLDRN = "Finger Lakes Donor Recovery Network")) %>%
   ggplot(aes(x = opo, y = percent_enrolled)) +
     geom_violin() +
     labs(x = "OPO", 
-         y = "Percent of Eligible Population Enrolled",
-         title = "Distribution of Percent Enrollment by OPO") +
-   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = rel(1)))
+         y = "Eligible Population Enrolled (%)",
+         title = "Distribution of Enrollment by OPO") 
 ```
 
-An organ procurement organization (OPO) is a non-profit organization that is responsible for the evaluation and procurement of deceased-donor organs for organ transplantation. There are 4 OPOs in the New York State, each with its own designated service area. From the plot above, we found that the distribution of registration rates in counties designated to the 4 OPOs are different. Obviously, the New York Organ Donor Network has the lowest distribution of Percent Enrollment, and will be used as the reference group in regression analysis.
+An organ procurement organizations (OPO) are non-profit organizations that are responsible for the evaluation and procurement of deceased-donor organs for organ transplantation. There are 4 OPOs in the New York State, each with its own designated service area. From the plot above, we found that the distribution of registration rates in counties designated to the 4 OPOs are different. The New York Organ Donor Network has the lowest distribution of Percent Enrollment, and was thus used as the reference group for analyses.
 
-##Change of Slope Visualization: 2012
+## Change of Slope Visualization: 2012
 
 ```{r visualization 2012, message = FALSE, results = "hide", warning = FALSE}
 library(ggrepel)
@@ -321,46 +332,42 @@ diff_diff_organ_2012 = organ %>%
   group_by(county) %>%
   spread(value = eligible_population_enrolled, key = date) %>%
   janitor::clean_names() %>%
-  mutate(slope_2012_2010 = (x2012_07_01-x2010_07_01)/as.integer(as.Date("2012-07-01")-as.Date("2010-07-01")),
-         slope_2014_2012 = (x2014_07_01-x2012_07_01)/as.integer(as.Date("2014-07-01")-as.Date("2012-07-01")),
-         slope_diff = slope_2014_2012-slope_2012_2010) %>%
+  mutate(slope_2012_2010 = (x2012_07_01 - x2010_07_01)/as.integer(as.Date("2012-07-01") - as.Date("2010-07-01")),
+         slope_2014_2012 = (x2014_07_01 - x2012_07_01)/as.integer(as.Date("2014-07-01") - as.Date("2012-07-01")),
+         slope_diff = slope_2014_2012 - slope_2012_2010) %>%
   ungroup() %>%
   mutate(county = fct_reorder(county, slope_diff)) %>%
   mutate(is_total_nys = ifelse(county == "TOTAL NYS", 1, 0))
 
 diff_diff_organ_ny_2012 = filter(diff_diff_organ_2012, county %in% c("TOTAL NYS"))
 
-
-  ggplot(diff_diff_organ_2012, aes(x = county, y = slope_diff)) +
-    geom_point() +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    theme(legend.position = "none") +
-    geom_text_repel(data = diff_diff_organ_ny_2012, 
-                    aes(x = county, 
-                        y = slope_diff, 
-                        label = county), nudge_x = -2.5, nudge_y = .001) +
-    labs(title = "Slope Change After 2012 Policy",
-         y = "Slope Change")
-    
-
+ggplot(diff_diff_organ_2012, aes(x = county, y = slope_diff)) +
+  geom_point() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  theme(legend.position = "none") +
+  geom_text_repel(data = diff_diff_organ_ny_2012, 
+                  aes(x = county, 
+                      y = slope_diff, 
+                      label = county), nudge_x = -2.5, nudge_y = .001) +
+  labs(title = "Slope Change After 2012 Policy",
+       y = "Slope Change")
 ```
 
 We calculated the average donor designation share rate of increase for each county and for the total New York State using three points: a point before Lauren's Law was passed in 2012, a point at the time of the law's passage, and a point two years after. The slope was calculated by dividing the change in donor designation share and dividing by the number of days between the two points used. Almost every county saw negative changes in slope.
 
-##Change of Slope Visualization: 2017
+## Change of Slope Visualization: 2017
 
 ```{r visualization 2017, message = FALSE, results = "hide", warning = FALSE}
-
 diff_diff_organ_2017 = organ %>%
   filter(date == as.Date("2018-09-01") | date == as.Date("2017-02-01") | date == as.Date("2015-07-01")) %>%
   select(county, date, eligible_population_enrolled) %>%
   group_by(county) %>%
   spread(value = eligible_population_enrolled, key = date) %>%
   janitor::clean_names() %>%
-  mutate(slope_2017_2015 = (x2017_02_01-x2015_07_01)/as.integer(as.Date("2017-02-01")-as.Date("2015-07-01")),
-         slope_2018_2017 = (x2018_09_01-x2017_02_01)/as.integer(as.Date("2018-09-01")-as.Date("2017-02-01")),
-         slope_diff = slope_2018_2017-slope_2017_2015) %>%
+  mutate(slope_2017_2015 = (x2017_02_01 - x2015_07_01)/as.integer(as.Date("2017-02-01") - as.Date("2015-07-01")),
+         slope_2018_2017 = (x2018_09_01 - x2017_02_01)/as.integer(as.Date("2018-09-01") - as.Date("2017-02-01")),
+         slope_diff = slope_2018_2017 - slope_2017_2015) %>%
   ungroup() %>%
   mutate(county = fct_reorder(county, slope_diff)) %>%
   mutate(is_total_nys = ifelse(county == "TOTAL NYS", 1, 0))
@@ -378,18 +385,9 @@ diff_diff_organ_ny_2017 = filter(diff_diff_organ_2017, county %in% c("TOTAL NYS"
                         label = county), nudge_x = -2.5, nudge_y = .01) +
     labs(title = "Slope Change After 2017 Policy",
          y = "Slope Change")
-    
-
-
 ```
 
 We used one and a half year increments rather than two year increments because our data does not reach two years after the passage of the law. Almost all the slopes increase after 2017. NY county, one of the larger counties in NY, is one of the 7 counties that has a decreasing average slope. The next section will test significance of these changes in slope. 
-
-
-
-
-
-
 
 ## Formal analyses
 
@@ -592,35 +590,56 @@ add_predictions(organ_sp, all_sp_model) %>%
 The first model was built using criterion-based methods, searching for subsets of predictors with the optimal Cp and Adjusted R-squared.
 
 ```{r, eval = FALSE}
-# Summary of models for each size (one model per size)
-b = regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NULL)
-summary(b) 
+subsets <- regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NULL)
+summary(subsets) 
 ```
 
-The first model is: percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015.
+The first model evaluated was: percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015.
+
 ```{r}
-fit_1 = lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, regression_df)
-fit_1 %>% broom::glance()
-fit_1 %>% broom::tidy()
+county_one <- regression_df %>% 
+  lm(percent_enrolled ~ opo + percent_hs_diploma + percent_college + percent_male_2015 + percent_asian_2015 +
+       percent_medcr_2015, data = .)
+
+county_one %>% 
+  broom::glance() %>% 
+  kable()
+
+county_one %>% 
+  broom::tidy() %>% 
+  kable()
 ```
 
 The second model was built based on our hypothesis that factors including OPO, medicare enrollment, gender, ethnicity, and education status affect registration rate.
 
 ```{r}
-fit_2 =   lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = regression_df) 
-fit_2 %>% broom::glance()
-fit_2 %>% broom::tidy()
+county_two <- regression_df %>% 
+  lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 + percent_white_2015 + percent_hs_diploma +
+       percent_college, data = .)  
+
+county_two %>% 
+  broom::glance() %>% 
+  kable()
+
+county_two %>% 
+  broom::tidy() %>% 
+  kable()
 ```
 
 The final model was adopted from model 2, adding interaction term between enthnicity and high school education.
 
 ```{r}
-fit_final = 
-  lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = regression_df) 
+county_final <- regression_df %>%  
+  lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 + percent_white_2015*percent_hs_diploma +
+       percent_college, data = .) 
 
-fit_final %>% broom::glance()
-fit_final %>%  broom::tidy()
+county_final %>% 
+  broom::glance() %>% 
+  kable()
 
+county_final %>%
+  broom::tidy() %>% 
+  kable()
 ```
 
 We found that type of OPO that conducts the registration affects registration rate. Percentage of medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate. 
@@ -628,14 +647,16 @@ We found that type of OPO that conducts the registration affects registration ra
 #### Model validation 
 
 ```{r bootstrap, eval=F}
-## Bootstrapping
-bootstrap_df = 
+bootstrap_df <-  
   regression_df %>% 
   modelr::bootstrap(n = 100) %>% 
   mutate(
-    model_1 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, data = .x)),
-    model_2 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x)),
-    model_3 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x))) 
+    model_1 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_hs_diploma + percent_college +
+                                      percent_male_2015 + percent_asian_2015 + percent_medcr_2015, data = .x)),
+    model_2 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 +
+                                      percent_white_2015 + percent_hs_diploma + percent_college, data = .x)),
+    model_3 = purrr::map(strap, ~lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 +
+                                      percent_white_2015*percent_hs_diploma + percent_college, data = .x)))
 
 bootstrap_df %>% 
   mutate(
@@ -648,21 +669,22 @@ bootstrap_df %>%
   dplyr::filter(term != "(Intercept)") %>% 
   group_by(model, term) %>% 
   summarize(boot_se = sd(estimate)) %>% 
-  spread(key = model, value = boot_se)
+  spread(key = model, value = boot_se) %>% 
+  kable()
 ```
 
-```{r}
-## Cross Validation
+```{r cross validation}
+cv_df <- crossv_mc(regression_df, 100)  
 
-cv_df = 
-  crossv_mc(regression_df, 100) 
-
-cv_df = 
+cv_df <-  
   cv_df %>% 
   mutate(
-    model_1 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015, data = .x)),
-    model_2 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015 + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x)),
-    model_3 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medicare_enrollment_2015 + percent_male_2015 + percent_white_2015*percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15, data = .x))) %>% 
+    model_1 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_hs_diploma + percent_college +
+                                      percent_male_2015 + percent_asian_2015 + percent_medcr_2015, data = .x)),
+    model_2 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 +
+                                      percent_white_2015 + percent_hs_diploma + percent_college, data = .x)),
+    model_3 = purrr::map(train, ~lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 +
+                                      percent_white_2015*percent_hs_diploma + percent_college, data = .x))) %>% 
   mutate(rmse_1 = purrr::map2_dbl(model_1, test, ~rmse(model = .x, data = .y)),
          rmse_2 = purrr::map2_dbl(model_2, test, ~rmse(model = .x, data = .y)),
          rmse_3 = purrr::map2_dbl(model_3, test, ~rmse(model = .x, data = .y))) %>% 
