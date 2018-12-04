@@ -293,34 +293,18 @@ ny_map
 The above chloropleth shows how different counties in 2018 range in the proportion of eligible adults enrolled as organ donors. Interestingly, the counties that make up and surround New York City have among the lowest enrollment rates. 
 
 ```{r county county enrollment}
-county_enrollment_plot <-  
-  organ %>% 
-  filter(county != "TOTAL NYS") %>%
-  ggplot(aes(x = date, y = registry_enrollments, color = county)) +
-    geom_line() +
-    labs(x = "Date", 
-         y = "Persons enrolled", 
-         title = "Registry enrollments across time")
-
-ggplotly(county_enrollment_plot)
+organ %>% 
+filter(county != "TOTAL NYS") %>%
+ggplot(aes(x = date, y = registry_enrollments, color = county)) +
+  geom_line() +
+  labs(x = "Date", 
+       y = "Persons enrolled", 
+       title = "Registry enrollment counts across time") + 
+  viridis::scale_color_viridis(discrete = TRUE) + 
+  theme(legend.position = "none")
 ```
 
 The registry enrollments had a generally increasing trend across the years. However, note a sudden change in registry enrollments on 2009-06-01 and 2017-10-1. Curiously, the enrollment even declined for some counties on 2017-10-1, which indicates a flaw in the data. 
-
-```{r proportion county enrolled}
-county_enrollment_rate_plot <-  
-  organ %>% 
-  filter(county != "TOTAL NYS") %>%
-  ggplot(aes(x = date, y = eligible_population_enrolled, color = county)) +
-    geom_line() +
-    labs(x = "Date", 
-         y = "% Persons enrolled", 
-         title = "Registration rate across time")
-
-ggplotly(county_enrollment_rate_plot)
-```
-
-This plot shows the trend of registration rate from 2008 to 2018 for counties in New York State. Note that the registration rates for Counties Cattauragus and St Lawrence were not updated for most of the years.
 
 ```{r opo distribution}
 combined_df %>% 
