@@ -697,7 +697,14 @@ cv_df <-
   gather(key = model, value = rmse, rmse_1:rmse_3)
 
 cv_df %>% 
-  ggplot(aes(x = model, y = rmse)) + geom_violin()
+  ggplot(aes(x = model, y = rmse)) + 
+  geom_violin() + 
+  labs(title = "Distribution of RMSE for candidate models", 
+       x = "Model", 
+       y = "RMSE") + 
+  scale_x_discrete(labels = c("rmse_1" = "Model 1",
+                              "rmse_2" = "Model 2",
+                              "rmse_3" = "Final model"))
 ```
 
 ## Discussion
