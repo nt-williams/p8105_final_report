@@ -40,21 +40,16 @@ theme_set(theme_bw())
   Like every state, NY has a first person consent policy for deceased organ donation. If a person on the donor registry list dies and is a candidate for organ donation, his or her family cannot prevent an organ procurement agency from gifting the organs to a person on an organ waitlist. Although uniform enforcement of this law is questionable, first person consent is believed to be important in supplying organ donations.
   New York, however, has the lowest proportion of eligible people enrolled on the donor registry. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade and were interested in comparing county donation rates to see if a targeted approach to increasing NY's organ donation rate may be warranted.  
 
-
 ## Initial questions
 
 ### Trends and Policies
 
 Over the last 6 years, the state government has passed into law several policies to increase the donor designation share. In 2012 it passed Lauren's law, which requires the DMV drivers license application to force people to decide whether or not they will join the registry. In order to complete the application, applicants must actively mark that they will skip over the question. In 2017 the govenor of NY passed a law that reuiquires health insurance applications to asks people if they want to sign up for the organ registry. 
 
-
 Was there a statewide change in the growth of donor designation share after any of these laws were passed? If there was, was this change seen in all counties or only a subset?
-
-
 
 Additionally, in 2016, the size of the eligible pool increased when the minimum age for joining the registry was lowered from eighteen to sixteen. We initially wondered if 16 and 17 year olds were more likely to register, given that they sign up for permits and licenses, and therefore, wondered if there would be an increase in the percentage of eligible people enrolling on the registry. However, while studying our data, we realized that the percent eligible population enrolled variable used the same denomenator (the estimated number of people at least 18), regardless of the year, so our measure was not technically measuring donor designation share after 2017, but rather the ratio between the number people enrolled and the number of people over 18. After the 2016 law, we expected this measure to increase, since the 16 and 17 year old enrollees would add to the numerator but not denomenator. Did this increase actually occur?  
 
-
 ### County Characteristics
 
 What are some factors that predict the percentage of eligible people enrolled on the donor registry for each county?
@@ -62,7 +57,6 @@ What are some factors that predict the percentage of eligible people enrolled on
 ### County Characteristics
 
 What are some factors that predict the percentage of eligible people enrolled on the donor registry for each county?
-
 
 ## Data 
 
@@ -589,58 +583,69 @@ add_predictions(organ_sp, all_sp_model) %>%
 
 The first model was built using criterion-based methods, searching for subsets of predictors with the optimal Cp and Adjusted R-squared.
 
-```{r, eval = FALSE}
+```{r subsets, eval = FALSE}
 subsets <- regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NULL)
 summary(subsets) 
 ```
 
 The first model evaluated was: percent_enrolled ~ opo + percent_persons_25_w_hs_diploma_2011_15 + percent_persons_25_w_4_yrs_college_2011_15 + percent_male_2015 + percent_asian_2015 + percent_medicare_enrollment_2015.
 
-```{r}
+```{r county model one}
 county_one <- regression_df %>% 
   lm(percent_enrolled ~ opo + percent_hs_diploma + percent_college + percent_male_2015 + percent_asian_2015 +
        percent_medcr_2015, data = .)
 
 county_one %>% 
-  broom::glance() %>% 
-  kable()
-
-county_one %>% 
   broom::tidy() %>% 
-  kable()
+  kable(digits = 3, 
+        col.names = c("Term", 
+                      "Estimate", 
+                      "Std. Error", 
+                      "Statistic", 
+                      "p-value"))
 ```
 
 The second model was built based on our hypothesis that factors including OPO, medicare enrollment, gender, ethnicity, and education status affect registration rate.
 
-```{r}
+```{r county model two}
 county_two <- regression_df %>% 
   lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 + percent_white_2015 + percent_hs_diploma +
        percent_college, data = .)  
 
 county_two %>% 
-  broom::glance() %>% 
-  kable()
-
-county_two %>% 
   broom::tidy() %>% 
-  kable()
+  kable(digits = 3, 
+        col.names = c("Term", 
+                      "Estimate", 
+                      "Std. Error", 
+                      "Statistic", 
+                      "p-value"))
 ```
 
 The final model was adopted from model 2, adding interaction term between enthnicity and high school education.
 
-```{r}
+```{r county model final}
 county_final <- regression_df %>%  
   lm(percent_enrolled ~ opo + percent_medcr_2015 + percent_male_2015 + percent_white_2015*percent_hs_diploma +
        percent_college, data = .) 
 
-county_final %>% 
-  broom::glance() %>% 
-  kable()
-
 county_final %>%
   broom::tidy() %>% 
-  kable()
+  kable(digits = 3, 
+        col.names = c("Term", 
+                      "Estimate", 
+                      "Std. Error", 
+                      "Statistic", 
+                      "p-value"))
 ```
+
+Model comparisons can be found in the table below. 
+
+|Model        |Adjusted r-squared  | AIC     |
+|-------------|--------------------|---------|
+|Model 1      | 0.76               | 345.46  |
+|Model 2      | 0.74               | 348.62  |
+|Final model  | 0.81               | 331.97  |
 
 We found that type of OPO that conducts the registration affects registration rate. Percentage of medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate. 
 
@@ -695,27 +700,16 @@ cv_df %>%
   ggplot(aes(x = model, y = rmse)) + geom_violin()
 ```
 
-
 ## Discussion
 
 Using mixed-effects models we did find main effects of all three policies that were targeted at increasing organ donor enrollment. However, it is important to note that we cannot firmly draw any causal conclusions from the present analysis. While increases organ donor enrollment did coincide with major policy changes in New York, we did not compare the trends of enrollment in New York with those of the greater United States or another state that did not enact any policy during the same timeframe and thus did not establish a counter-factual. As such, we cannot rule out that the results we observed simply reflect a general trend in the United States and not any policy taken by the state of New York. That being said, our models do show a effects of policy changes. 
 
 While the policies were designed to increase enrollment, it appears the 2012 policy might have had an opposite effect. The 2012 policy mandated that when residents of New York obtained a new driver's license, they must either check a box to skip a question asking them if they want to enroll or must enroll in the registry. For future research about this policy, it would be helpful to look specifically at DMV registration rate (percentage of people applying for dmv identifications who enroll in the registry), as this 2012 policy was targeted toward the DMV. There are different avenues for enrolling on the registry, so if the rate of DMV registration increased but the rate of registration in other avenues decreased independent of the law, this legislation technically had its intended effect.
 
-
 Many of the smaller counties in NYS already have the enrollment registration rates seen in surrounding states. However, the larger counties in the New York City area have rates that are at least 15 percentage points lower than those of surrounding states. It is great that people in small counties are willing to donate organs, but NY needs to target larger counties with smaller rates to take advantage of the number of potential organs these counties represent.   
-
 
 Our exploration of this dataset also showed that New York needs to keep better records. Unexplained, sudden simultaneous peaks and simultaneous falls in county organ registration rates are seen in our dataset, which means there could be late updating or mistake in the dataset. This brings limitations to our trends analysis.  
 
-
-New York 
-
-
-
-```{r}
-
-```
 
 
 
