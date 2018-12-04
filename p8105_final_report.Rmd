@@ -200,13 +200,13 @@ regression_df <-
 ## Exploratory analyses
 
 ```{r population vs. percent, results = "hide", message = FALSE, warning = FALSE}
-lowest_3_counties = organ %>% 
+lowest_3_counties <- organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
   arrange(eligible_population_enrolled) %>%
   top_n(n = -3, eligible_population_enrolled)
 
-top_county = organ %>% 
+top_county <-  organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
   arrange(eligible_population_enrolled) %>%
@@ -277,7 +277,7 @@ ny_map
 The above chloropleth shows how different counties in 2018 range in the proportion of eligible adults enrolled as organ donors. Interestingly, the counties that make up and surround New York City have among the lowest enrollment rates. 
 
 ```{r}
-county_enrollment_plot = 
+county_enrollment_plot <-  
   organ %>% 
   filter(county != "TOTAL NYS") %>%
   ggplot(aes(x = date, y = registry_enrollments, color = county)) +
@@ -292,7 +292,7 @@ ggplotly(county_enrollment_plot)
 The registry enrollments had a generally increasing trend across the years. However, note a sudden change in registry enrollments on 2009-06-01 and 2017-10-1. Curiously, the enrollment even declined for some counties on 2017-10-1, which indicates a flaw in the data. 
 
 ```{r}
-county_enrollment_rate_plot = 
+county_enrollment_rate_plot <-  
   organ %>% 
   filter(county != "TOTAL NYS") %>%
   ggplot(aes(x = date, y = eligible_population_enrolled, color = county)) +
@@ -325,7 +325,8 @@ Organ procurement organizations (OPO) are non-profit organizations that are resp
 ```{r visualization 2012, message = FALSE, results = "hide", warning = FALSE}
 library(ggrepel)
 
-diff_diff_organ_2012 = organ %>%
+diff_diff_organ_2012 <- 
+  organ %>%
   filter(date == as.Date("2014-07-01") | date == as.Date("2012-07-01") | date == as.Date("2010-07-01")) %>%
   select(county, date, eligible_population_enrolled) %>%
   group_by(county) %>%
@@ -338,19 +339,20 @@ diff_diff_organ_2012 = organ %>%
   mutate(county = fct_reorder(county, slope_diff)) %>%
   mutate(is_total_nys = ifelse(county == "TOTAL NYS", 1, 0))
 
-diff_diff_organ_ny_2012 = filter(diff_diff_organ_2012, county %in% c("TOTAL NYS"))
+diff_diff_organ_ny_2012 <- filter(diff_diff_organ_2012, county %in% c("TOTAL NYS"))
 
-ggplot(diff_diff_organ_2012, aes(x = county, y = slope_diff)) +
-  geom_point() +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  theme(legend.position = "none") +
-  geom_text_repel(data = diff_diff_organ_ny_2012, 
-                  aes(x = county, 
-                      y = slope_diff, 
-                      label = county), nudge_x = -2.5, nudge_y = .001) +
-  labs(title = "Slope Change After 2012 Policy",
-       y = "Slope Change")
+diff_diff_organ_2012 %>% 
+  ggplot(aes(x = county, y = slope_diff)) +
+    geom_point() +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    theme(legend.position = "none") +
+    geom_text_repel(data = diff_diff_organ_ny_2012, 
+                    aes(x = county, 
+                        y = slope_diff, 
+                        label = county), nudge_x = -2.5, nudge_y = .001) +
+    labs(title = "Slope Change After 2012 Policy",
+         y = "Slope Change")
 ```
 
 We calculated the average donor designation share rate of increase for each county and for the total New York State using three points: a point before Lauren's Law was passed in 2012, a point at the time of the law's passage, and a point two years after. The slope was calculated by dividing the change in donor designation share and dividing by the number of days between the two points used. Almost every county saw negative changes in slope.
@@ -358,7 +360,7 @@ We calculated the average donor designation share rate of increase for each coun
 ## Change of Slope Visualization: 2017
 
 ```{r visualization 2017, message = FALSE, results = "hide", warning = FALSE}
-diff_diff_organ_2017 = organ %>%
+diff_diff_organ_2017 <- organ %>%
   filter(date == as.Date("2018-09-01") | date == as.Date("2017-02-01") | date == as.Date("2015-07-01")) %>%
   select(county, date, eligible_population_enrolled) %>%
   group_by(county) %>%
@@ -373,8 +375,8 @@ diff_diff_organ_2017 = organ %>%
 
 diff_diff_organ_ny_2017 = filter(diff_diff_organ_2017, county %in% c("TOTAL NYS"))
 
-
-  ggplot(diff_diff_organ_2017, aes(x = county, y = slope_diff)) +
+diff_diff_organ_2017 %>% 
+  ggplot(aes(x = county, y = slope_diff)) +
     geom_point() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     theme(legend.position = "none") +
