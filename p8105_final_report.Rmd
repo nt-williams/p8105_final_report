@@ -68,6 +68,7 @@ What are some factors that predict the percentage of eligible people enrolled on
 New York State organ donor data was pulled from New York's official public data [API](https://health.data.ny.gov/Health/Donate-Life-Organ-and-Tissue-Donor-Registry-Enroll/sqk8-8a2h/data?fbclid=IwAR0DjHPMd3up76Cq1bMH0z12f_vr4rLz5YwtMPcT2kc_a5nP-nVJlDEinNE). 
 
 ```{r ny api data, message = FALSE}
+# pulling data from api and doing initial clean
 organ <- GET("https://health.data.ny.gov/resource/km5a-7zrs.csv?$limit=10000") %>% 
   content("parsed") %>%
   janitor::clean_names() %>%
@@ -83,6 +84,7 @@ organ <- GET("https://health.data.ny.gov/resource/km5a-7zrs.csv?$limit=10000") %
 Splines were created in correspondence with three major policy changes designed to increase donor registration. In order to include time as a variable dates were converted to the number of days since the first data point in the database (September 1, 2008). Counties Cattauragus and St. Lawrence were removed for analysis due to what we believe to be incorrect data entry (i.e. the proportion over the entire timeframe did not change at all for either of these counties). 
 
 ```{r spline info}
+# creating splines
 organ_sp <- organ %>% 
   mutate(year_sp_2012 = (date > "2012-10-1") * (date - as.Date("2012-10-1")), 
          year_sp_2016 = (date > "2016-5-1") * (date - as.Date("2016-5-1")), 
@@ -100,13 +102,15 @@ organ_sp <- organ %>%
 Extra county level data came from Area Health Resources Files (AHRF). AHRF data collects healthcare related information and demographics at the county level for every county in the United States. Specific variables were chosen from AHRF to be included in this analysis. AHRF data is provided as a SAS datafile with un-informative variable names for over 3000 variables; as such, extracting specific variables presented a challenge. Variables labels in SAS are recorded as a variable attribute in R. The following code was used to extract the specific variables used in our analyses. 
 
 ```{r eval = FALSE}
+# pulling in ahrf data
 library(haven)
 
 ahrf <- 
   read_sas("data/ahrf.sas7bdat")
 
 ahrf_selected <- read_csv("data/ahrf_selected_variables.csv")
-  
+
+# function to pull sas labels
 check_label <- function(x) {
   if (attr(ahrf[[x]], "label") %in% ahrf_selected$label) {
     return(x)
@@ -117,6 +121,7 @@ check_label <- function(x) {
 
 keep_var <- list()
 
+# pulling all sas labels in our list
 for (i in names(ahrf)) {
  keep_var[i] <- check_label(i)
 }
@@ -128,10 +133,12 @@ ahrf <- ahrf %>%
 
 keep_names <- list()
 
+# pulling labels to be variable names
 for (i in 1:ncol(ahrf)) {
   keep_names[[i]] <- attr(ahrf[[i]], "label")
 }
 
+# converting variable names to dataframe
 for (i in 1:length(keep_names)) {
   names(keep_names)[i] <- "label"
 }
@@ -140,6 +147,7 @@ keep_names <- data.frame(keep_names) %>%
   gather(keep, label, label:label.17) %>% 
   select(label)
 
+# setting new variable names
 data.table::setnames(ahrf, old = keep_var, new = keep_names$label)
 
 ahrf <- ahrf %>% 
@@ -153,6 +161,7 @@ ahrf %>%
 To explore county-level factors that may affect registration rate, we combined the organ donor data and AHRF dataset for further analysis. We used the organ registration rate in September 2018 only. Steps were followed as below to clean the data. Some original AHRF variables were divided by total population to generate percentages that are easier to interprete in a linear model.
 
 ```{r combining ahrf and organ, warning = FALSE}
+# limiting data to september 2018
 organ_2018_09 <- 
   organ %>%
   filter(date == '2018-09-01') %>% 
@@ -163,6 +172,7 @@ demo_ny <-
   as.tibble() %>% 
   rename(county = county_name)
 
+# cleaning and combining ahrf and organ data
 combined_df <- 
   inner_join(by = 'county', organ_2018_09, demo_ny) %>%
   select(county, opo, population_18_estimate, registry_enrollments, percent_enrolled,
@@ -184,6 +194,7 @@ combined_df <-
                 -medicare_enrollment_aged_tot_2015) %>% 
   select(county, percent_enrolled, everything())
 
+# editing names for regression models
 regression_df <- 
   combined_df %>% 
   select(-county) %>% 
@@ -199,7 +210,7 @@ regression_df <-
 
 ## Exploratory analyses
 
-```{r population vs. percent, results = "hide", message = FALSE, warning = FALSE}
+```{r population vs percent, results = "hide", message = FALSE, warning = FALSE}
 lowest_3_counties <- organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
@@ -232,7 +243,8 @@ organ %>%
 
 This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that allign with those of neighboring states, such as New Jersey and Connecticut. 
 
-```{r dpi = 300, out.width = "70%"}
+```{r choropleth, dpi = 300, out.width = "70%"}
+# choropleth of organ registration in ny
 organ_tidy <- organ %>% 
   separate(location, c("lat", "long"), sep = ",") %>% 
   mutate(long = str_replace(long, "\\)", ""),
@@ -240,6 +252,7 @@ organ_tidy <- organ %>%
   mutate(lat = str_replace(lat, "\\(", ""),
          lat = as.numeric(lat))
 
+ # getting map data
 ny <- map_data("state") %>%
   filter(region == "new york")
 
@@ -248,6 +261,7 @@ ny_county <- map_data("county") %>%
   as.tibble() %>% 
   rename(county = subregion)
 
+# limiting to september 2018
 organ_df <-  
   organ_tidy %>% 
   filter(date == "2018-09-01") %>% 
@@ -255,8 +269,10 @@ organ_df <-
   mutate(county = tolower(county)) %>% 
   mutate(county = recode(county, 'cattauragus' = 'cattaraugus'))
 
+# joining organ and map data
 ny_county_combined <- full_join(organ_df, ny_county, by = 'county')
 
+# plotting map
 ny_map <- ggplot() + 
   geom_polygon(data = ny_county_combined, 
                aes(x = long, y = lat, group = group, fill = eligible_population_enrolled)) +
@@ -276,7 +292,7 @@ ny_map
 
 The above chloropleth shows how different counties in 2018 range in the proportion of eligible adults enrolled as organ donors. Interestingly, the counties that make up and surround New York City have among the lowest enrollment rates. 
 
-```{r}
+```{r county county enrollment}
 county_enrollment_plot <-  
   organ %>% 
   filter(county != "TOTAL NYS") %>%
@@ -291,7 +307,7 @@ ggplotly(county_enrollment_plot)
 
 The registry enrollments had a generally increasing trend across the years. However, note a sudden change in registry enrollments on 2009-06-01 and 2017-10-1. Curiously, the enrollment even declined for some counties on 2017-10-1, which indicates a flaw in the data. 
 
-```{r}
+```{r proportion county enrolled}
 county_enrollment_rate_plot <-  
   organ %>% 
   filter(county != "TOTAL NYS") %>%
@@ -300,12 +316,13 @@ county_enrollment_rate_plot <-
     labs(x = "Date", 
          y = "% Persons enrolled", 
          title = "Registration rate across time")
+
 ggplotly(county_enrollment_rate_plot)
 ```
 
 This plot shows the trend of registration rate from 2008 to 2018 for counties in New York State. Note that the registration rates for Counties Cattauragus and St Lawrence were not updated for most of the years.
 
-```{r}
+```{r opo distribution}
 combined_df %>% 
   mutate(opo = fct_recode(opo, 
                           NYODN = "New York Organ Donor Network", 
@@ -397,6 +414,7 @@ We used one and a half year increments rather than two year increments because o
 Formal analyses of the effect of major policy changes were conducted using mixed-effects linear models with a random intercept; counties were treated as the clustering variable. The outcome was analyzed was the proportion of eligible adults registered with one of four organ donor organizations. Four successive models were created: a model only analyzing a linear effect of time; a model including a term for a spline corresponding with a 2012 policy requiring that DMV drivers license application force people to decide whether or not they will join the registry; a model including a term for a spline corresponding with a 2016 policy that added organ donor registry to the New York state health insurance marketplace application; a model including a term for a spline corresponding with a 2017 policy that lowered the age from eligible enrollees from 18 to 16 years old; and a model that included all splines. All models were adjusted for the specific organization used in each county; models were compared using likelihood ratio tests. 
 
 ```{r no model, message = FALSE}
+# plotting raw data over time
 organ_sp %>% 
   ggplot() +
   geom_line(aes(x = total_days, y = eligible_population_enrolled, color = opo, group = county), 
@@ -422,9 +440,11 @@ The above plot shows the increasing trend of organ donor enrollment over time. T
 The first model built only analyzed the effect of the 2012 policy. Main effects of time and the 2012 spline were found. Overall, every one year change resulted in a 2.88 percentage point increase in registry enrollment (95% CI: 2.84, 2.93) up to the beginning of the 2012 policy. However, after the 2012 policy went into effect the rate of increase in enrollment dropped 2.56 percentage points. 
 
 ```{r spline 2012, message = FALSE}
+# mixed model with 2012 spline
 sp_12_model <- organ_sp %>% 
   lmer(eligible_population_enrolled ~ total_days + year_sp_2012 + (1 | county), data = .)
 
+# model stats
 sp_12_model %>% 
   broom::tidy() %>% 
   filter(term %in% c("total_days", "year_sp_2012")) %>% 
@@ -443,6 +463,7 @@ sp_12_model %>%
   knitr::kable(digits = 3) %>% 
   kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
 
+# plotting 2012 spline model
 add_predictions(organ_sp, sp_12_model) %>% 
   ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
   geom_line() +
@@ -461,9 +482,11 @@ add_predictions(organ_sp, sp_12_model) %>%
 Modeling the effect of the 2016 policy, we once again found main effects of time and the 2016 spline. On average, every year increase resulted in an estimated 2.56 percentage point increase in eligible adult enrollment until the 2016 policy went into effect. After the 2016 policy, the estimated rate at which enrollment was changing increased by 0.79 percentage points (95% CI: 0.69, 0.89). 
  
 ```{r spline 2016, message = FALSE}
+# mixed model 2016 spline
 sp_16_model <- organ_sp %>% 
   lmer(eligible_population_enrolled ~ total_days + year_sp_2016 + opo + (1 | county), data = .) 
 
+# 2016 model stats
 sp_16_model %>% 
   broom::tidy() %>% 
   filter(term %in% c("total_days", "year_sp_2016")) %>% 
@@ -482,6 +505,7 @@ sp_16_model %>%
   knitr::kable(digits = 3) %>% 
   kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
 
+# plotting 2016 model# 2016 model stats
 add_predictions(organ_sp, sp_16_model) %>% 
   ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
   geom_line() + 
@@ -500,10 +524,12 @@ add_predictions(organ_sp, sp_16_model) %>%
 Similarily to the 2016 spline, modeling the 2017 policy we found main effects of time and the 2017 spline. On average, every year increase corresponded with a 2.56 percentage point increase in proportion of eligible individuals enrolled. However, after the 2017 spline, the rate of change in enrollment increased by 1.7 percentage points (95% CI: 1.55, 1.85) to 4.26 percentage points. 
 
 ```{r spline 2017, message = FALSE}
+# 2017 spline mixed model
 sp_17_model <- organ_sp %>% 
   lmer(eligible_population_enrolled ~ total_days + year_sp_2017 + opo + (1 | county), data = ., 
        REML = FALSE)
 
+# 2017 model stats
 sp_17_model %>% 
   broom::tidy() %>% 
   filter(term %in% c("total_days", "year_sp_2017")) %>% 
@@ -522,6 +548,7 @@ sp_17_model %>%
   knitr::kable(digits = 3) %>% 
   kable_styling(full_width = F, bootstrap_options = c("hover", "striped"))
 
+# plotting model
 add_predictions(organ_sp, sp_17_model) %>% 
   ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
   geom_line() +
@@ -540,10 +567,12 @@ add_predictions(organ_sp, sp_17_model) %>%
 The final model analyzed accounted for all three separate policy changes. Main effects were found for all three splines. This model found that after the 2012 policy was enacted, the estimated rate of increase in population enrollement decreased by .98 percentage points (95% CI: -1.06, -0.90). However, after the 2016 policy went into effect the rate of enrollment increased again by 0.33 percentage points (95% CI: 0.039, 0.627). Lastly, after the 2017 policy went into effect the rate of enrollment incresaed again by 2.47 percentage points (95% CI: 2.05, 2.88). Ultimately, after all three policies came into effect the estimated increase in organ donor enrollment is 4.9 percentage points per year (an estimated net effect of 1.82 percentage points). 
 
 ```{r all splines, message = FALSE}
+# all splines mixed model
 all_sp_model <- organ_sp %>% 
   lmer(eligible_population_enrolled ~ total_days + year_sp_2012 + year_sp_2016 + year_sp_2017 + opo + 
          (1 | county), data = ., REML = FALSE)
 
+# all splines model stats
 all_sp_model %>% 
   broom::tidy() %>% 
   filter(term %in% c("total_days", "year_sp_2012", "year_sp_2016", "year_sp_2017")) %>% 
@@ -567,6 +596,7 @@ all_sp_model %>%
 ```
 
 ```{r all splines plot, message = FALSE}
+# plotting all splines model
 add_predictions(organ_sp, all_sp_model) %>% 
   ggplot(aes(x = total_days, y = pred, color = opo, type = county)) + 
   geom_line() +
