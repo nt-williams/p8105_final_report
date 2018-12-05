@@ -47,7 +47,9 @@ theme_set(theme_bw())
 
 ## Related work
 
-[Here is a study on California's organ donor registration data.](https://www.mapbox.com/narratives/a-mission-to-heal-donor-network-west-organ-donation/?fbclid=IwAR2zqeRYa5B_j3Z88zwSIpT29kqMNzJmk49HS3Erz1e0HYLurSRwMcAnBSA)
+[Here is a website on California's organ donor registration data.](https://www.mapbox.com/narratives/a-mission-to-heal-donor-network-west-organ-donation/?fbclid=IwAR2zqeRYa5B_j3Z88zwSIpT29kqMNzJmk49HS3Erz1e0HYLurSRwMcAnBSA) This website created an interactive map that allows users to see the donor registration proportions in different counties in California. It has another interactive map directly next to the donor registration percentage map that allows users to see the racial make up of each county. This allows the viewer to visualize how different racial compositions correspond to different registration percentages. We wanted to apply the interactive map idea to Neww York and use a regression approach to a look at how race and additional factors may correlate with donor registration percentage.   
+
+
 
 ## Initial questions
 
