@@ -23,7 +23,7 @@ New York, however, has the [lowest proportion](https://www.donatelife.net/wp-con
 Related work
 ------------
 
-[Here is a study on California's organ donor registration data.](https://www.mapbox.com/narratives/a-mission-to-heal-donor-network-west-organ-donation/?fbclid=IwAR2zqeRYa5B_j3Z88zwSIpT29kqMNzJmk49HS3Erz1e0HYLurSRwMcAnBSA)
+[Here is a website on California's organ donor registration data.](https://www.mapbox.com/narratives/a-mission-to-heal-donor-network-west-organ-donation/?fbclid=IwAR2zqeRYa5B_j3Z88zwSIpT29kqMNzJmk49HS3Erz1e0HYLurSRwMcAnBSA) This website created an interactive map that allows users to see the donor registration proportions in different counties in California. It has another interactive map directly next to the donor registration percentage map that allows users to see the racial make up of each county. This allows the viewer to visualize how different racial compositions correspond to different registration percentages. We wanted to apply the interactive map idea to New York and use a regression approach to a look at how race and additional factors may correlate with donor registration percentage.
 
 Initial questions
 -----------------
@@ -38,7 +38,9 @@ Additionally, in 2017, the size of the eligible pool increased when the minimum 
 
 ### County Characteristics
 
-What are some factors that predict the percentage of eligible people enrolled on the donor registry for each county?
+What are some demographic or health-related factors associated with registration rate? The factors we considered include population size, race, gender, age, education, and Medicare enrollment. Our initial thought was to visualize each variable's effect by simply plotting it against registration rate. However, given the small sample size (50 counties) and confounding effect among the factors, such one-to-one associations were not easy to tell by plots. Therefore, we then tried to fit linear models with the predictors of interest, so that each demographic variable can be adjusted for each other.
+
+Using the regression model, we tried to investigate how factors are associated with the percentage of eligible people enrolled on the donor registry for each county. Are the association positive or negative? Most of the demographic variables are standardized to the percentage scale, so we can also examine the extent to which they affect registration share by looking at the coefficients.
 
 Data
 ----
