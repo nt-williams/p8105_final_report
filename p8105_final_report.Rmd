@@ -637,7 +637,7 @@ subsets <- regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NUL
 summary(subsets) 
 ```
 
-The first model evaluated used OPO, percent of adults over 25 with a high school diploma, percent of adults over 25 with four years of college, percent of the county that is male, the percent of the county that is asian, and the percent of the county enrolled in Medicare. 
+As suggested by the function above (result not shown), the first model evaluated used OPO, percent of adults over 25 with a high school diploma, percent of adults over 25 with four years of college, percent of the county that is male, the percent of the county that is asian, and the percent of the county enrolled in Medicare. 
 
 ```{r county model one}
 county_one <- regression_df %>% 
@@ -773,18 +773,22 @@ cv_df %>%
 The distribution of RMSE for the final model was the lowest compared to the other two candidate models. So our final model had the best predictive performance.
 
 ## Discussion
+```{r}
+combined_df %>% filter(opo =="New York Organ Donor Network") %>% distinct(county)
+
+```
 
 Using mixed-effects models we did find main effects of all three policies that were targeted at increasing organ donor enrollment. However, it is important to note that we cannot firmly draw any causal conclusions from the present analysis. While increases organ donor enrollment did coincide with major policy changes in New York, we did not compare the trends of enrollment in New York with those of the greater United States or another state that did not enact any policy during the same timeframe and thus did not establish a counter-factual. As such, we cannot rule out that the results we observed simply reflect a general trend in the United States and not any policy taken by the state of New York. That being said, our models do show a effects of policy changes. 
 
-In our regression model analysing the effect of county characteristics on registration share, we found that the most effective predictor was the type of OPO. The New York Organ Donor Network had obviously the least organ donor share,  
+In our regression model analysing the effect of county characteristics on registration share, we found that the most effective predictor was the type of OPO. The New York Organ Donor Network (NYODN), which serves counties with large population (e.g. Queens, Kings, Bronx), had obviously the least organ donor share, while the other three OPOs had similarly higher average registration share. Considering the large population of the counties designated to NYODN, it is reasonable to put more effort to this area. 
+
+There are also other county-level demographic and health-related characteristics affecting registration rate. We found that the percent of people enrolled in Medicare, the percent of people that finished high school and college education, the percent of male and/or white people in the population are positively associated with registration share. This finding is interesting but not conclusive, because we do not have information about people already in the registry.   
+
 While the policies were designed to increase enrollment, it appears the 2012 policy might have had an opposite effect. The 2012 policy mandated that when residents of New York obtained a new driver's license, they must either check a box to skip a question asking them if they want to enroll or must enroll in the registry. For future research about this policy, it would be helpful to look specifically at DMV registration rate (percentage of people applying for dmv identifications who enroll in the registry), as this 2012 policy was targeted toward the DMV. There are different avenues for enrolling on the registry, so if the rate of DMV registration increased but the rate of registration in other avenues decreased independent of the law, this legislation technically had its intended effect.
 
-Many of the smaller counties in NYS already have the enrollment registration rates seen in surrounding states. However, the larger counties in the New York City area have rates that are at least 15 percentage points lower than those of surrounding states. It is great that people in small counties are willing to donate organs, but NY needs to target larger counties with smaller rates to take advantage of the number of potential organs these counties represent.   
+Many of the smaller counties in NYS already have the enrollment registration rates seen in surrounding states. However, the larger counties in the New York City area have rates that are at least 15 percentage points lower than those of surrounding states. It is great that people in small counties are willing to donate organs, but NY needs to target larger counties with smaller rates to take advantage of the number of potential organ donors these counties represent. 
 
 Our exploration of this dataset also showed that New York needs to keep better records. Unexplained, sudden simultaneous peaks and simultaneous falls in county organ registration rates are seen in our dataset, which means there could be late updating or mistake in the dataset. This brings limitations to our trends analysis.  
-
-
-
 
 
 
