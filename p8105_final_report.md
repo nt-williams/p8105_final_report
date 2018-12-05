@@ -192,18 +192,21 @@ Exploratory analyses
 --------------------
 
 ``` r
+# finding what counties have the lowest enrollments
 lowest_3_counties <- organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
   arrange(eligible_population_enrolled) %>%
   top_n(n = -3, eligible_population_enrolled)
 
+# finding county with top enrollment
 top_county <-  organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
   arrange(eligible_population_enrolled) %>%
   top_n(n = 1, eligible_population_enrolled)
 
+# plotting population vs. percent enrolled
 organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
@@ -235,7 +238,7 @@ organ_tidy <- organ %>%
   mutate(lat = str_replace(lat, "\\(", ""),
          lat = as.numeric(lat))
 
- # getting map data
+# getting map data
 ny <- map_data("state") %>%
   filter(region == "new york")
 
@@ -285,6 +288,7 @@ ny_map
 The above chloropleth shows how different counties in 2018 range in the proportion of eligible adults enrolled as organ donors. Interestingly, the counties that make up and surround New York City have among the lowest enrollment rates.
 
 ``` r
+# plotting number of people enrolled over time
 organ %>% 
 filter(county != "TOTAL NYS") %>%
 ggplot(aes(x = date, y = registry_enrollments, color = county)) +
@@ -301,38 +305,40 @@ ggplot(aes(x = date, y = registry_enrollments, color = county)) +
 The registry enrollments had a generally increasing trend across the years. However, note a sudden change in registry enrollments on 2009-06-01 and 2017-10-1. Curiously, the enrollment even declined for some counties on 2017-10-1, which indicates a flaw in the data.
 
 ``` r
-opo_violin = 
-  combined_df %>% 
+opo_violin <-  
+# ploting distribution of percent enrolled by opo
+combined_df %>% 
   mutate(opo = fct_recode(opo, 
                           NYODN = "New York Organ Donor Network", 
                           CDTNY = "Center for Donation and Transplant in New York", 
                           FLDRN = "Finger Lakes Donor Recovery Network")) %>%
-  ggplot(aes(x = opo, y = percent_enrolled, fill = opo)) +
+  ggplot(aes(x = opo, y = percent_enrolled)) +
     geom_violin() +
     labs(x = "OPO", 
-         y = "Eligible Population Enrolled (%)",
-         title = "Distribution of Enrollment by OPO") +
+         y = "Eligible Population Enrolled (%)") +
   theme(legend.position = 'none')
 
 opo_map <- 
   ggplot() + 
   geom_polygon(data = ny_county_combined, 
                aes(x = long, y = lat, group = group, fill = opo)) +
+  viridis::scale_fill_viridis(discrete = TRUE, 
+                              option = "cividis") +
   geom_path(data = ny_county_combined, 
             aes(x = long, y = lat, group = group), 
             color = "white", size = 0.1) +
-  labs(title = "Distribution of counties served by the 4 OPOs", 
-       x = 'Longitude', 
+  labs(x = 'Longitude', 
        y = 'Latitude', 
        fill = 'OPO') +
   coord_map() +
   theme_void() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom", 
+        legend.title = element_blank())
 
-opo_violin + opo_map
+wrap_elements(opo_violin + opo_map) + ggtitle("OPO distribution in New York State")
 ```
 
-<img src="p8105_final_report_files/figure-markdown_github/opo distribution-1.png" width="65%" />
+<img src="p8105_final_report_files/figure-markdown_github/opo distribution-1.png" width="70%" />
 
 Organ procurement organizations (OPO) are non-profit organizations that are responsible for the evaluation and procurement of deceased-donor organs for organ transplantation. There are 4 OPOs in the New York State, each with its own designated service area. From the plot above, we found that the distribution of registration rates in counties designated to the 4 OPOs are different. The New York Organ Donor Network has the lowest distribution of Percent Enrollment, and was thus used as the reference group for analyses.
 
@@ -1531,11 +1537,9 @@ percent\_white\_2015:percent\_hs\_diploma
 </table>
 Model comparisons can be found in the table below.
 
-| Model       | Adjusted r-squared | AIC    |
-|-------------|--------------------|--------|
-| Model 1     | 0.76               | 345.46 |
-| Model 2     | 0.74               | 348.62 |
-| Final model | 0.81               | 331.97 |
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; Updated upstream |Model |Adjusted r-squared | AIC | =======
+
+|Model | Adjusted r-squared | AIC | &gt;&gt;&gt;&gt;&gt;&gt;&gt; Stashed changes |-------------|--------------------|---------| |Model 1 | 0.76 | 345.46 | |Model 2 | 0.74 | 348.62 | |Final model | 0.81 | 331.97 |
 
 We found that type of OPO that conducted the registration affects registration rate. Percentage of Medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate.
 

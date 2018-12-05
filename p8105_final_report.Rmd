@@ -215,18 +215,21 @@ regression_df <-
 ## Exploratory analyses
 
 ```{r population vs percent, results = "hide", message = FALSE, warning = FALSE}
+# finding what counties have the lowest enrollments
 lowest_3_counties <- organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
   arrange(eligible_population_enrolled) %>%
   top_n(n = -3, eligible_population_enrolled)
 
+# finding county with top enrollment
 top_county <-  organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
   arrange(eligible_population_enrolled) %>%
   top_n(n = 1, eligible_population_enrolled)
 
+# plotting population vs. percent enrolled
 organ %>% 
   filter(date == as.Date("2018-09-01")) %>% 
   filter(county != "TOTAL NYS") %>%
@@ -256,7 +259,7 @@ organ_tidy <- organ %>%
   mutate(lat = str_replace(lat, "\\(", ""),
          lat = as.numeric(lat))
 
- # getting map data
+# getting map data
 ny <- map_data("state") %>%
   filter(region == "new york")
 
@@ -304,6 +307,7 @@ ny_map
 The above chloropleth shows how different counties in 2018 range in the proportion of eligible adults enrolled as organ donors. Interestingly, the counties that make up and surround New York City have among the lowest enrollment rates. 
 
 ```{r county county enrollment}
+# plotting number of people enrolled over time
 organ %>% 
 filter(county != "TOTAL NYS") %>%
 ggplot(aes(x = date, y = registry_enrollments, color = county)) +
