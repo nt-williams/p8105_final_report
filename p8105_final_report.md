@@ -18,7 +18,9 @@ Organ donation is a public health crisis in New York where there are currently [
 
 Like every state, NY has a first person consent policy for deceased organ donation. If a person on the donor registry list dies and is a candidate for organ donation, his or her family cannot prevent an organ procurement agency from gifting the organs to a person on an organ waitlist. Although uniform enforcement of this law is questionable, first person consent is believed to be important in supplying organ donations.
 
-New York, however, has the [lowest proportion](https://www.donatelife.net/wp-content/uploads/2018/09/DLA_AnnualReport.pdf) of eligible people enrolled on the donor registry. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade in response to a series of policies. We attempted to explore the association between county-level demographic parameters and registration rate, trying to account for differences in registration share among counties in New York State. We were also interested in comparing country donation rates, to see if a targeted approach to increasing NY's organ donation rate may be warranted.
+New York, however, has the [lowest proportion](https://www.donatelife.net/wp-content/uploads/2018/09/DLA_AnnualReport.pdf) of eligible people enrolled on the donor registry. The plot below demonstrates how low NY falls in comparison with nearby states. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade in response to a series of policies. We attempted to explore the association between county-level demographic parameters and registration rate, trying to account for differences in registration share among counties in New York State. We were also interested in comparing country donation rates, to see if a targeted approach to increasing NY's organ donation rate may be warranted.
+
+<img src="p8105_final_report_files/figure-markdown_github/state comparison-1.png" width="65%" />
 
 Related work
 ------------
