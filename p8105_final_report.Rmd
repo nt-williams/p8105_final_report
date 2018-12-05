@@ -619,6 +619,7 @@ county_one <- regression_df %>%
 county_one %>% 
   broom::tidy() %>% 
   kable(digits = 3, 
+        caption = "Summary of Model 1",
         col.names = c("Term", 
                       "Estimate", 
                       "Std. Error", 
@@ -626,7 +627,7 @@ county_one %>%
                       "p-value"))
 ```
 
-The second model was built based on our hypothesis that factors including OPO, medicare enrollment, gender, ethnicity, and education status affect registration rate.
+The second model was built based on our hypothesis that factors including OPO, Medicare enrollment, gender, ethnicity, and education status affect registration rate.
 
 ```{r county model two}
 county_two <- regression_df %>% 
@@ -636,6 +637,7 @@ county_two <- regression_df %>%
 county_two %>% 
   broom::tidy() %>% 
   kable(digits = 3, 
+        caption = "Summary of Model 2",
         col.names = c("Term", 
                       "Estimate", 
                       "Std. Error", 
@@ -653,6 +655,7 @@ county_final <- regression_df %>%
 county_final %>%
   broom::tidy() %>% 
   kable(digits = 3, 
+        caption = "Summary of the final model",
         col.names = c("Term", 
                       "Estimate", 
                       "Std. Error", 
@@ -662,18 +665,19 @@ county_final %>%
 
 Model comparisons can be found in the table below. 
 
-
 |Model        |Adjusted r-squared  | AIC     |
 |-------------|--------------------|---------|
 |Model 1      | 0.76               | 345.46  |
 |Model 2      | 0.74               | 348.62  |
 |Final model  | 0.81               | 331.97  |
 
-We found that type of OPO that conducts the registration affects registration rate. Percentage of medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate. 
+We found that type of OPO that conducted the registration affects registration rate. Percentage of Medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate. 
 
 #### Model validation 
 
-```{r bootstrap, eval=F}
+We used both cross validation and bootstrapping to select candidate models. Bootstrapping was used to assess the variance of the coefficients of the 3 models, and cross validation was used to evaluation the predicative ability of the three models. 
+
+```{r bootstrap}
 set.seed(5)
 
 bootstrap_df <-  
@@ -698,9 +702,16 @@ bootstrap_df %>%
   dplyr::filter(term != "(Intercept)") %>% 
   group_by(model, term) %>% 
   summarize(boot_se = sd(estimate)) %>% 
-  spread(key = model, value = boot_se) %>% 
-  kable()
+  spread(key = model, value = boot_se)  %>% 
+  kable(digits = 3, 
+        caption = "Standard deviation of the coefficients for 3 models",
+        col.names = c("Term", 
+                      "Model 1", 
+                      "Model 2", 
+                      "Final Model"))
 ```
+
+The final model had the smallest SD for types of OPO, percent of male, and percent of people having Medicare. However, the coefficient for percent of people having high school diploma was the highest for the final model, so this predictor may be less reliable than others.
 
 ```{r cross validation}
 cv_df <- crossv_mc(regression_df, 100)  
@@ -730,6 +741,8 @@ cv_df %>%
                               "rmse_2" = "Model 2",
                               "rmse_3" = "Final model"))
 ```
+
+The distribution of RMSE for the final model was the lowest compared to the other two candidate models. So our final model had the best predictive performance.
 
 ## Discussion
 

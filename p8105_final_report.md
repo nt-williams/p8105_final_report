@@ -903,6 +903,7 @@ county_one <- regression_df %>%
 county_one %>% 
   broom::tidy() %>% 
   kable(digits = 3, 
+        caption = "Summary of Model 1",
         col.names = c("Term", 
                       "Estimate", 
                       "Std. Error", 
@@ -911,6 +912,9 @@ county_one %>%
 ```
 
 <table>
+<caption>
+Summary of Model 1
+</caption>
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -1086,7 +1090,7 @@ percent\_medcr\_2015
 </tr>
 </tbody>
 </table>
-The second model was built based on our hypothesis that factors including OPO, medicare enrollment, gender, ethnicity, and education status affect registration rate.
+The second model was built based on our hypothesis that factors including OPO, Medicare enrollment, gender, ethnicity, and education status affect registration rate.
 
 ``` r
 county_two <- regression_df %>% 
@@ -1096,6 +1100,7 @@ county_two <- regression_df %>%
 county_two %>% 
   broom::tidy() %>% 
   kable(digits = 3, 
+        caption = "Summary of Model 2",
         col.names = c("Term", 
                       "Estimate", 
                       "Std. Error", 
@@ -1104,6 +1109,9 @@ county_two %>%
 ```
 
 <table>
+<caption>
+Summary of Model 2
+</caption>
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -1289,6 +1297,7 @@ county_final <- regression_df %>%
 county_final %>%
   broom::tidy() %>% 
   kable(digits = 3, 
+        caption = "Summary of the final model",
         col.names = c("Term", 
                       "Estimate", 
                       "Std. Error", 
@@ -1297,6 +1306,9 @@ county_final %>%
 ```
 
 <table>
+<caption>
+Summary of the final model
+</caption>
 <thead>
 <tr>
 <th style="text-align:left;">
@@ -1497,9 +1509,11 @@ Model comparisons can be found in the table below.
 | Model 2     | 0.74               | 348.62 |
 | Final model | 0.81               | 331.97 |
 
-We found that type of OPO that conducts the registration affects registration rate. Percentage of medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate.
+We found that type of OPO that conducted the registration affects registration rate. Percentage of Medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate.
 
 #### Model validation
+
+We used both cross validation and bootstrapping to select candidate models. Bootstrapping was used to assess the variance of the coefficients of the 3 models, and cross validation was used to evaluation the predicative ability of the three models.
 
 ``` r
 set.seed(5)
@@ -1526,9 +1540,179 @@ bootstrap_df %>%
   dplyr::filter(term != "(Intercept)") %>% 
   group_by(model, term) %>% 
   summarize(boot_se = sd(estimate)) %>% 
-  spread(key = model, value = boot_se) %>% 
-  kable()
+  spread(key = model, value = boot_se)  %>% 
+  kable(digits = 3, 
+        caption = "Standard deviation of the coefficients for 3 models",
+        col.names = c("Term", 
+                      "Model 1", 
+                      "Model 2", 
+                      "Final Model"))
 ```
+
+<table>
+<caption>
+Standard deviation of the coefficients for 3 models
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Term
+</th>
+<th style="text-align:right;">
+Model 1
+</th>
+<th style="text-align:right;">
+Model 2
+</th>
+<th style="text-align:right;">
+Final Model
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+opoCenter for Donation and Transplant in New York
+</td>
+<td style="text-align:right;">
+2.461
+</td>
+<td style="text-align:right;">
+2.402
+</td>
+<td style="text-align:right;">
+1.901
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+opoFinger Lakes Donor Recovery Network
+</td>
+<td style="text-align:right;">
+2.409
+</td>
+<td style="text-align:right;">
+2.385
+</td>
+<td style="text-align:right;">
+2.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+opoUNYTS
+</td>
+<td style="text-align:right;">
+2.602
+</td>
+<td style="text-align:right;">
+2.634
+</td>
+<td style="text-align:right;">
+2.378
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percent\_asian\_2015
+</td>
+<td style="text-align:right;">
+0.388
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percent\_college
+</td>
+<td style="text-align:right;">
+0.142
+</td>
+<td style="text-align:right;">
+0.156
+</td>
+<td style="text-align:right;">
+0.150
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percent\_hs\_diploma
+</td>
+<td style="text-align:right;">
+0.336
+</td>
+<td style="text-align:right;">
+0.384
+</td>
+<td style="text-align:right;">
+1.275
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percent\_male\_2015
+</td>
+<td style="text-align:right;">
+0.454
+</td>
+<td style="text-align:right;">
+0.471
+</td>
+<td style="text-align:right;">
+0.407
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percent\_medcr\_2015
+</td>
+<td style="text-align:right;">
+0.300
+</td>
+<td style="text-align:right;">
+0.320
+</td>
+<td style="text-align:right;">
+0.271
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percent\_white\_2015
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.127
+</td>
+<td style="text-align:right;">
+0.211
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+percent\_white\_2015:percent\_hs\_diploma
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.015
+</td>
+</tr>
+</tbody>
+</table>
+The final model had the smallest SD for types of OPO, percent of male, and percent of people having Medicare. However, the coefficient for percent of people having high school diploma was the highest for the final model, so this predictor may be less reliable than others.
 
 ``` r
 cv_df <- crossv_mc(regression_df, 100)  
@@ -1560,6 +1744,8 @@ cv_df %>%
 ```
 
 <img src="p8105_final_report_files/figure-markdown_github/cross validation-1.png" width="65%" />
+
+The distribution of RMSE for the final model was the lowest compared to the other two candidate models. So our final model had the best predictive performance.
 
 Discussion
 ----------
