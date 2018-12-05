@@ -18,9 +18,7 @@ Organ donation is a public health crisis in New York where there are currently [
 
 Like every state, NY has a first person consent policy for deceased organ donation. If a person on the donor registry list dies and is a candidate for organ donation, his or her family cannot prevent an organ procurement agency from gifting the organs to a person on an organ waitlist. Although uniform enforcement of this law is questionable, first person consent is believed to be important in supplying organ donations.
 
-New York, however, has the [lowest proportion](https://www.donatelife.net/wp-content/uploads/2018/09/DLA_AnnualReport.pdf) of eligible people enrolled on the donor registry. The plot below demonstrates how low NY falls in comparison with nearby states. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade in response to a series of policies. We attempted to explore the association between county-level demographic parameters and registration rate, trying to account for differences in registration share among counties in New York State. We were also interested in comparing country donation rates, to see if a targeted approach to increasing NY's organ donation rate may be warranted.
-
-<img src="p8105_final_report_files/figure-markdown_github/state comparison-1.png" width="65%" />
+New York, however, has the [lowest proportion](https://www.donatelife.net/wp-content/uploads/2018/09/DLA_AnnualReport.pdf) of eligible people enrolled on the donor registry. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade in response to a series of policies. We attempted to explore the association between county-level demographic parameters and registration rate, trying to account for differences in registration share among counties in New York State. We were also interested in comparing country donation rates, to see if a targeted approach to increasing NY's organ donation rate may be warranted.
 
 Related work
 ------------
@@ -248,12 +246,19 @@ ny_county <- map_data("county") %>%
 organ_df <-  
   organ_tidy %>% 
   filter(date == "2018-09-01") %>% 
-  select(eligible_population_enrolled, county) %>% 
+  select(eligible_population_enrolled, county, opo) %>% 
   mutate(county = tolower(county)) %>% 
   mutate(county = recode(county, 'cattauragus' = 'cattaraugus'))
 
 # joining organ and map data
-ny_county_combined <- full_join(organ_df, ny_county, by = 'county')
+ny_county_combined <- 
+  full_join(organ_df, ny_county, by = 'county') %>% 
+  filter(is.na(opo) == FALSE) %>% 
+  mutate(opo = fct_recode(opo, 
+                          NYODN = "New York Organ Donor Network", 
+                          CDTNY = "Center for Donation and Transplant in New York", 
+                          FLDRN = "Finger Lakes Donor Recovery Network"),
+         opo = fct_relevel(opo, 'NYODN'))
 
 # plotting map
 ny_map <- ggplot() + 
@@ -294,16 +299,35 @@ ggplot(aes(x = date, y = registry_enrollments, color = county)) +
 The registry enrollments had a generally increasing trend across the years. However, note a sudden change in registry enrollments on 2009-06-01 and 2017-10-1. Curiously, the enrollment even declined for some counties on 2017-10-1, which indicates a flaw in the data.
 
 ``` r
-combined_df %>% 
+opo_violin = 
+  combined_df %>% 
   mutate(opo = fct_recode(opo, 
                           NYODN = "New York Organ Donor Network", 
                           CDTNY = "Center for Donation and Transplant in New York", 
                           FLDRN = "Finger Lakes Donor Recovery Network")) %>%
-  ggplot(aes(x = opo, y = percent_enrolled)) +
+  ggplot(aes(x = opo, y = percent_enrolled, fill = opo)) +
     geom_violin() +
     labs(x = "OPO", 
          y = "Eligible Population Enrolled (%)",
-         title = "Distribution of Enrollment by OPO") 
+         title = "Distribution of Enrollment by OPO") +
+  theme(legend.position = 'none')
+
+opo_map <- 
+  ggplot() + 
+  geom_polygon(data = ny_county_combined, 
+               aes(x = long, y = lat, group = group, fill = opo)) +
+  geom_path(data = ny_county_combined, 
+            aes(x = long, y = lat, group = group), 
+            color = "white", size = 0.1) +
+  labs(title = "Distribution of counties served by the 4 OPOs", 
+       x = 'Longitude', 
+       y = 'Latitude', 
+       fill = 'OPO') +
+  coord_map() +
+  theme_void() +
+  theme(legend.position = "bottom")
+
+opo_violin + opo_map
 ```
 
 <img src="p8105_final_report_files/figure-markdown_github/opo distribution-1.png" width="65%" />
@@ -1754,6 +1778,7 @@ Discussion
 
 Using mixed-effects models we did find main effects of all three policies that were targeted at increasing organ donor enrollment. However, it is important to note that we cannot firmly draw any causal conclusions from the present analysis. While increases organ donor enrollment did coincide with major policy changes in New York, we did not compare the trends of enrollment in New York with those of the greater United States or another state that did not enact any policy during the same timeframe and thus did not establish a counter-factual. As such, we cannot rule out that the results we observed simply reflect a general trend in the United States and not any policy taken by the state of New York. That being said, our models do show a effects of policy changes.
 
+In our regression model analysing the effect of county characteristics on registration share, we found that the most effective predictor was the type of OPO. The New York Organ Donor Network had obviously the least organ donor share,
 While the policies were designed to increase enrollment, it appears the 2012 policy might have had an opposite effect. The 2012 policy mandated that when residents of New York obtained a new driver's license, they must either check a box to skip a question asking them if they want to enroll or must enroll in the registry. For future research about this policy, it would be helpful to look specifically at DMV registration rate (percentage of people applying for dmv identifications who enroll in the registry), as this 2012 policy was targeted toward the DMV. There are different avenues for enrolling on the registry, so if the rate of DMV registration increased but the rate of registration in other avenues decreased independent of the law, this legislation technically had its intended effect.
 
 Many of the smaller counties in NYS already have the enrollment registration rates seen in surrounding states. However, the larger counties in the New York City area have rates that are at least 15 percentage points lower than those of surrounding states. It is great that people in small counties are willing to donate organs, but NY needs to target larger counties with smaller rates to take advantage of the number of potential organs these counties represent.
