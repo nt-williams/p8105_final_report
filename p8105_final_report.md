@@ -893,7 +893,7 @@ subsets <- regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NUL
 summary(subsets) 
 ```
 
-The first model evaluated was: percent\_enrolled ~ opo + percent\_persons\_25\_w\_hs\_diploma\_2011\_15 + percent\_persons\_25\_w\_4\_yrs\_college\_2011\_15 + percent\_male\_2015 + percent\_asian\_2015 + percent\_medicare\_enrollment\_2015.
+The first model evaluated used OPO, percent of adults over 25 with a high school diploma, percent of adults over 25 with four years of college, percent of the county that is male, the percent of the county that is asian, and the percent of the county enrolled in Medicare.
 
 ``` r
 county_one <- regression_df %>% 
@@ -1502,6 +1502,8 @@ We found that type of OPO that conducts the registration affects registration ra
 #### Model validation
 
 ``` r
+set.seed(5)
+
 bootstrap_df <-  
   regression_df %>% 
   modelr::bootstrap(n = 100) %>% 
