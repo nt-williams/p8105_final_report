@@ -18,7 +18,22 @@ Organ donation is a public health crisis in New York where there are currently [
 
 Like every state, NY has a first person consent policy for deceased organ donation. If a person on the donor registry list dies and is a candidate for organ donation, his or her family cannot prevent an organ procurement agency from gifting the organs to a person on an organ waitlist. Although uniform enforcement of this law is questionable, first person consent is believed to be important in supplying organ donations.
 
-New York, however, has the [lowest proportion](https://www.donatelife.net/wp-content/uploads/2018/09/DLA_AnnualReport.pdf) of eligible people enrolled on the donor registry. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade in response to a series of policies. We attempted to explore the association between county-level demographic parameters and registration rate, trying to account for differences in registration share among counties in New York State. We were also interested in comparing country donation rates, to see if a targeted approach to increasing NY's organ donation rate may be warranted.
+New York, however, has the [lowest proportion](https://www.donatelife.net/wp-content/uploads/2018/09/DLA_AnnualReport.pdf) of eligible people enrolled on the donor registry. The plot below demonstrates how low New York falls in comparisons with nearby states. We were interested in exploring how NY donor designation share (percent of eligible people enrolled) has changed over the last decade in response to a series of policies. We attempted to explore the association between county-level demographic parameters and registration rate, trying to account for differences in registration share among counties in New York State. We were also interested in comparing country donation rates, to see if a targeted approach to increasing NY's organ donation rate may be warranted.
+
+``` r
+read_csv("data/state_donor_share.csv") %>% 
+  janitor::clean_names() %>% 
+  rename(state = "x1") %>% 
+  ggplot(aes(x = year, y = donor_designation_share, color = state)) +
+  geom_point() + 
+  geom_smooth() + 
+  labs(title = "State percentage enrolled comparison", 
+       x = "Year", 
+       y = "Eligible population enrolled (%)") + 
+  viridis::scale_color_viridis(discrete = TRUE)
+```
+
+<img src="p8105_final_report_files/figure-markdown_github/state comparisons-1.png" width="65%" />
 
 Related work
 ------------
@@ -30,15 +45,15 @@ Initial questions
 
 ### Trends and Policies
 
-Over the last 6 years, the state government has passed into law several policies to increase the donor designation share. In 2012 it passed Lauren's law, which requires the DMV drivers license application to force people to decide whether or not they will join the registry. In order to complete the application, applicants must actively mark that they will skip over the question. In 2016 the govenor of NY passed a law that reuiquires health insurance applications to asks people if they want to sign up for the organ registry.
+Over the last 6 years, the state government has passed into law several policies to increase the donor designation share. In 2012 it passed Lauren's law, which requires the DMV drivers license application to force people to decide whether or not they will join the registry. In order to complete the application, applicants must actively mark that they will skip over the question. In 2016 the governor of NY passed a law that requires health insurance applications to asks people if they want to sign up for the organ registry.
 
 Was there a statewide change in the growth of donor designation share after any of these laws were passed? If there was, was this change seen in all counties or only a subset?
 
-Additionally, in 2017, the size of the eligible pool increased when the minimum age for joining the registry was lowered from eighteen to sixteen. We initially wondered if 16 and 17 year olds were more likely to register, given that they sign up for permits and licenses, and therefore, wondered if there would be an increase in the percentage of eligible people enrolling on the registry. However, while studying our data, we realized that the percent eligible population enrolled variable used the same denomenator (the estimated number of people at least 18), regardless of the year, so our measure was not technically measuring donor designation share after 2017, but rather the ratio between the number people enrolled and the number of people over 18. After the 2016 law, we expected this measure to increase, since the 16 and 17 year old enrollees would add to the numerator but not denomenator. Did this increase actually occur?
+Additionally, in 2017, the size of the eligible pool increased when the minimum age for joining the registry was lowered from eighteen to sixteen. We initially wondered if 16 and 17 year olds were more likely to register, given that they sign up for permits and licenses, and therefore, wondered if there would be an increase in the percentage of eligible people enrolling on the registry. However, while studying our data, we realized that the percent eligible population enrolled variable used the same denominator (the estimated number of people at least 18), regardless of the year, so our measure was not technically measuring donor designation share after 2017, but rather the ratio between the number people enrolled and the number of people over 18. After the 2016 law, we expected this measure to increase, since the 16 and 17 year old enrollees would add to the numerator but not denominator. Did this increase actually occur?
 
 ### County Characteristics
 
-What are some demographic or health-related factors associated with registration rate? The factors we considered include population size, race, gender, age, education, and Medicare enrollment. Our initial thought was to visualize each variable's effect by simply plotting it against registration rate. However, given the small sample size (50 counties) and confounding effect among the factors, such one-to-one associations were not easy to tell by plots. Therefore, we then tried to fit linear models with the predictors of interest, so that each demographic variable can be adjusted for each other.
+What are some demographic or health-related factors associated with registration rate? The factors we considered include population size, race, gender, age, education, and Medicare enrollment. Our initial thought was to visualize each variable's effect by simply plotting it against registration rate. However, given the small sample size (62 counties) and confounding effect among the factors, such one-to-one associations were not easy to tell by plots. Therefore, we then tried to fit linear models with the predictors of interest, so that each demographic variable can be adjusted for each other.
 
 Using the regression model, we tried to investigate how factors are associated with the percentage of eligible people enrolled on the donor registry for each county. Are the association positive or negative? Most of the demographic variables are standardized to the percentage scale, so we can also examine the extent to which they affect registration share by looking at the coefficients.
 
@@ -61,7 +76,7 @@ organ <- GET("https://health.data.ny.gov/resource/km5a-7zrs.csv?$limit=10000") %
   rename(pop_2012 = "x2012_census_population")
 ```
 
-Splines were created in correspondence with three major policy changes designed to increase donor registration. In order to include time as a variable dates were converted to the number of days since the first data point in the database (September 1, 2008). Counties Cattauragus and St. Lawrence were removed for analysis due to what we believe to be incorrect data entry (i.e. the proportion over the entire timeframe did not change at all for either of these counties).
+Splines were created in correspondence with three major policy changes designed to increase donor registration. In order to include time as a variable dates were converted to the number of days since the first data point in the database (September 1, 2008). Counties Cattauragus and St. Lawrence were removed for analysis due to what we believe to be incorrect data entry (i.e. the proportion over the entire time-frame did not change at all for either of these counties).
 
 ``` r
 # creating splines
@@ -79,7 +94,7 @@ organ_sp <- organ %>%
                            "Finger Lakes Donor Recovery Network"))
 ```
 
-Extra county level data came from Area Health Resources Files (AHRF). AHRF data collects healthcare related information and demographics at the county level for every county in the United States. Specific variables were chosen from AHRF to be included in this analysis. AHRF data is provided as a SAS datafile with un-informative variable names for over 3000 variables; as such, extracting specific variables presented a challenge. Variables labels in SAS are recorded as a variable attribute in R. The following code was used to extract the specific variables used in our analyses.
+Extra county level data came from Area Health Resources Files (AHRF). AHRF data collects healthcare related information and demographics at the county level for every county in the United States. Specific variables were chosen from AHRF to be included in this analysis. AHRF data is provided as a SAS data-file with un-informative variable names for over 3000 variables; as such, extracting specific variables presented a challenge. Variables labels in SAS are recorded as a variable attribute in R. The following code was used to extract the specific variables used in our analyses.
 
 ``` r
 # pulling in ahrf data
@@ -138,7 +153,7 @@ ahrf %>%
   write_csv("data/ahrf_select_data.csv")
 ```
 
-To explore county-level factors that may affect registration rate, we combined the organ donor data and AHRF dataset for further analysis. We used the organ registration rate in September 2018 only. Steps were followed as below to clean the data. Some original AHRF variables were divided by total population to generate percentages that are easier to interprete in a linear model.
+To explore county-level factors that may affect registration rate, we combined the organ donor data and AHRF data-set for further analysis. We used the organ registration rate in September 2018 only. Steps were followed as below to clean the data. Some original AHRF variables were divided by total population to generate percentages that are easier to interpret in a linear model.
 
 ``` r
 # limiting data to september 2018
@@ -227,7 +242,7 @@ organ %>%
 
 <img src="p8105_final_report_files/figure-markdown_github/population vs percent-1.png" width="65%" />
 
-This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that allign with those of neighboring states, such as New Jersey and Connecticut.
+This plot shows that there is a negative correlation between the number of eligible potential donors and the percentage of eligible people enrolled. Three large counties in NYC, Bronx, Queens, and Kings have the lowest percentage. Smaller counties have percentages that align with those of neighboring states, such as New Jersey and Connecticut.
 
 ``` r
 # choropleth of organ registration in ny
@@ -306,8 +321,7 @@ The registry enrollments had a generally increasing trend across the years. Howe
 
 ``` r
 opo_violin <-  
-# ploting distribution of percent enrolled by opo
-combined_df %>% 
+  combined_df %>% 
   mutate(opo = fct_recode(opo, 
                           NYODN = "New York Organ Donor Network", 
                           CDTNY = "Center for Donation and Transplant in New York", 
@@ -323,22 +337,22 @@ opo_map <-
   geom_polygon(data = ny_county_combined, 
                aes(x = long, y = lat, group = group, fill = opo)) +
   viridis::scale_fill_viridis(discrete = TRUE, 
-                              option = "cividis") +
+                              option = "cividis") + 
   geom_path(data = ny_county_combined, 
             aes(x = long, y = lat, group = group), 
             color = "white", size = 0.1) +
   labs(x = 'Longitude', 
-       y = 'Latitude', 
-       fill = 'OPO') +
+       y = 'Latitude') +
   coord_map() +
   theme_void() +
   theme(legend.position = "bottom", 
         legend.title = element_blank())
 
-wrap_elements(opo_violin + opo_map) + ggtitle("OPO distribution in New York State")
+wrap_elements(opo_violin + opo_map) + 
+  ggtitle("OPO distribution in New York State")
 ```
 
-<img src="p8105_final_report_files/figure-markdown_github/opo distribution-1.png" width="70%" />
+<img src="p8105_final_report_files/figure-markdown_github/opo distribution-1.png" width="65%" />
 
 Organ procurement organizations (OPO) are non-profit organizations that are responsible for the evaluation and procurement of deceased-donor organs for organ transplantation. There are 4 OPOs in the New York State, each with its own designated service area. From the plot above, we found that the distribution of registration rates in counties designated to the 4 OPOs are different. The New York Organ Donor Network has the lowest distribution of Percent Enrollment, and was thus used as the reference group for analyses.
 
@@ -657,7 +671,7 @@ add_predictions(organ_sp, sp_16_model) %>%
 
 <img src="p8105_final_report_files/figure-markdown_github/spline 2016-1.png" width="65%" />
 
-Similarily to the 2016 spline, modeling the 2017 policy we found main effects of time and the 2017 spline. On average, every year increase corresponded with a 2.56 percentage point increase in proportion of eligible individuals enrolled. However, after the 2017 spline, the rate of change in enrollment increased by 1.7 percentage points (95% CI: 1.55, 1.85) to 4.26 percentage points.
+Similarly to the 2016 spline, modeling the 2017 policy we found main effects of time and the 2017 spline. On average, every year increase corresponded with a 2.56 percentage point increase in proportion of eligible individuals enrolled. However, after the 2017 spline, the rate of change in enrollment increased by 1.7 percentage points (95% CI: 1.55, 1.85) to 4.26 percentage points.
 
 ``` r
 # 2017 spline mixed model
@@ -761,7 +775,7 @@ add_predictions(organ_sp, sp_17_model) %>%
 
 <img src="p8105_final_report_files/figure-markdown_github/spline 2017-1.png" width="65%" />
 
-The final model analyzed accounted for all three separate policy changes. Main effects were found for all three splines. This model found that after the 2012 policy was enacted, the estimated rate of increase in population enrollement decreased by .98 percentage points (95% CI: -1.06, -0.90). However, after the 2016 policy went into effect the rate of enrollment increased again by 0.33 percentage points (95% CI: 0.039, 0.627). Lastly, after the 2017 policy went into effect the rate of enrollment incresaed again by 2.47 percentage points (95% CI: 2.05, 2.88). Ultimately, after all three policies came into effect the estimated increase in organ donor enrollment is 4.9 percentage points per year (an estimated net effect of 1.82 percentage points).
+The final model analyzed accounted for all three separate policy changes. Main effects were found for all three splines. This model found that after the 2012 policy was enacted, the estimated rate of increase in population enrollment decreased by .98 percentage points (95% CI: -1.06, -0.90). However, after the 2016 policy went into effect the rate of enrollment increased again by 0.33 percentage points (95% CI: 0.039, 0.627). Lastly, after the 2017 policy went into effect the rate of enrollment increased again by 2.47 percentage points (95% CI: 2.05, 2.88). Ultimately, after all three policies came into effect the estimated increase in organ donor enrollment is 4.9 percentage points per year (an estimated net effect of 1.82 percentage points).
 
 ``` r
 # all splines mixed model
@@ -927,7 +941,7 @@ subsets <- regsubsets(percent_enrolled ~ ., data = regression_df, force.in = NUL
 summary(subsets) 
 ```
 
-As suggested by the function above (result not shown), the first model evaluated used OPO, percent of adults over 25 with a high school diploma, percent of adults over 25 with four years of college, percent of the county that is male, the percent of the county that is asian, and the percent of the county enrolled in Medicare.
+As suggested by the function above (result not shown), the first model evaluated used OPO, percent of adults over 25 with a high school diploma, percent of adults over 25 with four years of college, percent of the county that is male, the percent of the county that is Asian, and the percent of the county enrolled in Medicare.
 
 ``` r
 county_one <- regression_df %>% 
@@ -1321,7 +1335,7 @@ percent\_college
 </tr>
 </tbody>
 </table>
-The final model was adopted from model 2, adding interaction term between enthnicity and high school education.
+The final model was adopted from model 2, adding interaction term between ethnicity and high school education.
 
 ``` r
 county_final <- regression_df %>%  
@@ -1537,9 +1551,11 @@ percent\_white\_2015:percent\_hs\_diploma
 </table>
 Model comparisons can be found in the table below.
 
-&lt;&lt;&lt;&lt;&lt;&lt;&lt; Updated upstream |Model |Adjusted r-squared | AIC | =======
-
-|Model | Adjusted r-squared | AIC | &gt;&gt;&gt;&gt;&gt;&gt;&gt; Stashed changes |-------------|--------------------|---------| |Model 1 | 0.76 | 345.46 | |Model 2 | 0.74 | 348.62 | |Final model | 0.81 | 331.97 |
+| Model       | Adjusted r-squared | AIC    |
+|-------------|--------------------|--------|
+| Model 1     | 0.76               | 345.46 |
+| Model 2     | 0.74               | 348.62 |
+| Final model | 0.81               | 331.97 |
 
 We found that type of OPO that conducted the registration affects registration rate. Percentage of Medicare enrollment, percentage of persons finishing high school education and finishing 4-year college education are positively associated with registration rate. This finding agrees with our hypothesis. Also, the gender `male` and race `white` are positively associated with registration rate.
 
@@ -1782,28 +1798,9 @@ The distribution of RMSE for the final model was the lowest compared to the othe
 Discussion
 ----------
 
-``` r
-combined_df %>% filter(opo =="New York Organ Donor Network") %>% distinct(county)
-```
+Using mixed-effects models we did find main effects of all three policies that were targeted at increasing organ donor enrollment. However, it is important to note that we cannot firmly draw any causal conclusions from the present analysis. While increases organ donor enrollment did coincide with major policy changes in New York, we did not compare the trends of enrollment in New York with those of the greater United States or another state that did not enact any policy during the same time-frame and thus did not establish a counter-factual. As such, we cannot rule out that the results we observed simply reflect a general trend in the United States and not any policy taken by the state of New York. That being said, our models do show a effects of policy changes.
 
-    ## # A tibble: 11 x 1
-    ##    county     
-    ##    <chr>      
-    ##  1 Bronx      
-    ##  2 Kings      
-    ##  3 Nassau     
-    ##  4 New York   
-    ##  5 Orange     
-    ##  6 Putnam     
-    ##  7 Queens     
-    ##  8 Richmond   
-    ##  9 Rockland   
-    ## 10 Suffolk    
-    ## 11 Westchester
-
-Using mixed-effects models we did find main effects of all three policies that were targeted at increasing organ donor enrollment. However, it is important to note that we cannot firmly draw any causal conclusions from the present analysis. While increases organ donor enrollment did coincide with major policy changes in New York, we did not compare the trends of enrollment in New York with those of the greater United States or another state that did not enact any policy during the same timeframe and thus did not establish a counter-factual. As such, we cannot rule out that the results we observed simply reflect a general trend in the United States and not any policy taken by the state of New York. That being said, our models do show a effects of policy changes.
-
-In our regression model analysing the effect of county characteristics on registration share, we found that the most effective predictor was the type of OPO. The New York Organ Donor Network (NYODN), which serves counties with large population (e.g. Queens, Kings, Bronx), had obviously the least organ donor share, while the other three OPOs had similarly higher average registration share. Considering the large population of the counties designated to NYODN, it is reasonable to put more effort to this area.
+In our regression model analyzing the effect of county characteristics on registration share, we found that the most effective predictor was the type of OPO. The New York Organ Donor Network (NYODN), which serves counties with large population (e.g. Queens, Kings, Bronx), had obviously the least organ donor share, while the other three OPOs had similarly higher average registration share. Considering the large population of the counties designated to NYODN, it is reasonable to put more effort to this area.
 
 There are also other county-level demographic and health-related characteristics affecting registration rate. We found that the percent of people enrolled in Medicare, the percent of people that finished high school and college education, the percent of male and/or white people in the population are positively associated with registration share. This finding is interesting but not conclusive, because we do not have information about people already in the registry.
 
@@ -1811,4 +1808,4 @@ While the policies were designed to increase enrollment, it appears the 2012 pol
 
 Many of the smaller counties in NYS already have the enrollment registration rates seen in surrounding states. However, the larger counties in the New York City area have rates that are at least 15 percentage points lower than those of surrounding states. It is great that people in small counties are willing to donate organs, but NY needs to target larger counties with smaller rates to take advantage of the number of potential organ donors these counties represent.
 
-Our exploration of this dataset also showed that New York needs to keep better records. Unexplained, sudden simultaneous peaks and simultaneous falls in county organ registration rates are seen in our dataset, which means there could be late updating or mistake in the dataset. This brings limitations to our trends analysis.
+Our exploration of this data-set also showed that New York needs to keep better records. Unexplained, sudden simultaneous peaks and simultaneous falls in county organ registration rates are seen in our data-set, which means there could be late updating or mistake in the data-set. This brings limitations to our trends analysis.
